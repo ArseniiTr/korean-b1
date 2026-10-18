@@ -5,155 +5,221 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Корейский до B1</title>
 <meta name="color-scheme" content="light dark">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;700&family=Nanum+Myeongjo:wght@700&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Oswald:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;700&family=Nanum+Myeongjo:wght@700;800&display=swap">
 <style>
-/* Layout: one column (max 760px), sticky header with tabs, cards only for exercises and the active lesson */
+/* Стиль: живопись Disco Elysium (приглушённая охра, бензиновый бирюзовый, ржавый, зерно на бумаге)
+   + корейский вебтун (жирные тушевые контуры панелей, жёсткая тень, речевые пузыри, растр-точки). */
 :root{
-  --bg:#f2f4f8; --surface:#ffffff; --surface-2:#e9edf4; --fg:#151b2b; --muted:#5d6678; --line:#d9dfe9;
-  --accent:#1d4ed8; --accent-soft:#e2e9ff; --accent-fg:#ffffff;
-  --ok:#157a4f; --ok-soft:#dcf3e7; --bad:#bf3f34; --bad-soft:#fbe4e1; --warn:#a46a12; --warn-soft:#fbefd4;
+  --bg:#e7dcc3; --bg-2:#d9cba9; --surface:#f5eedc; --surface-2:#e8dfc6; --fg:#1d2026; --muted:#5e6069; --ink:#1d2026; --ink-2:#3b3f4a;
+  --line:#c8bb9c; --accent:#c98a2c; --accent-fg:#1d2026; --accent-soft:#f0dcae; --teal:#2d7f86; --teal-soft:#cfe3e2; --rust:#b6472d;
+  --ok:#2f7c5a; --ok-soft:#d7e8dc; --bad:#b6472d; --bad-soft:#f0d3c9; --warn:#a0651a; --warn-soft:#f1dfb9;
+  --shadow:#1d2026; --glow:rgba(201,138,44,.35);
   --ko:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
   --ko-display:'Nanum Myeongjo','Apple Myungjo','Noto Serif KR',serif;
+  --display:'Cormorant Garamond','Times New Roman',Georgia,serif;
+  --label:'Oswald','Arial Narrow',Impact,sans-serif;
   --body:'IBM Plex Sans',-apple-system,'Segoe UI',Roboto,'Noto Sans KR',sans-serif;
-  --radius:12px;
+  --radius:6px;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#0e1320; --surface:#161c2c; --surface-2:#1e2639; --fg:#e7ebf3; --muted:#98a2b8; --line:#2a334a;
-    --accent:#7d9cff; --accent-soft:#1c2a52; --accent-fg:#0b1020;
-    --ok:#4fcf92; --ok-soft:#143526; --bad:#f29084; --bad-soft:#44201c; --warn:#e3ad4e; --warn-soft:#3e2f12;
+    --bg:#0f171c; --bg-2:#162229; --surface:#1a262d; --surface-2:#24333b; --fg:#ece3cf; --muted:#9ea7a6; --ink:#e8dfc8; --ink-2:#c9c0a8;
+    --line:#35454d; --accent:#e2a63a; --accent-fg:#14191c; --accent-soft:#3a3120; --teal:#56b4b8; --teal-soft:#1d3a3d; --rust:#e26a4c;
+    --ok:#5fc08f; --ok-soft:#17382b; --bad:#e26a4c; --bad-soft:#44241d; --warn:#e2a63a; --warn-soft:#3b2f15;
+    --shadow:#06090b; --glow:rgba(226,166,58,.25);
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#0e1320; --surface:#161c2c; --surface-2:#1e2639; --fg:#e7ebf3; --muted:#98a2b8; --line:#2a334a;
-  --accent:#7d9cff; --accent-soft:#1c2a52; --accent-fg:#0b1020;
-  --ok:#4fcf92; --ok-soft:#143526; --bad:#f29084; --bad-soft:#44201c; --warn:#e3ad4e; --warn-soft:#3e2f12;
+  --bg:#0f171c; --bg-2:#162229; --surface:#1a262d; --surface-2:#24333b; --fg:#ece3cf; --muted:#9ea7a6; --ink:#e8dfc8; --ink-2:#c9c0a8;
+  --line:#35454d; --accent:#e2a63a; --accent-fg:#14191c; --accent-soft:#3a3120; --teal:#56b4b8; --teal-soft:#1d3a3d; --rust:#e26a4c;
+  --ok:#5fc08f; --ok-soft:#17382b; --bad:#e26a4c; --bad-soft:#44241d; --warn:#e2a63a; --warn-soft:#3b2f15;
+  --shadow:#06090b; --glow:rgba(226,166,58,.25);
   color-scheme:dark;
 }
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.55;margin:0;min-height:100%}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.55;margin:0;min-height:100%;position:relative;
+  background-image:radial-gradient(ellipse 80% 60% at 20% 0%,var(--bg-2),transparent 60%),radial-gradient(ellipse 60% 50% at 100% 100%,var(--bg-2),transparent 60%);background-attachment:fixed}
+/* зерно холста поверх всей страницы */
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) body::before{mix-blend-mode:screen;opacity:.12} }
+:root[data-theme="dark"] body::before{mix-blend-mode:screen;opacity:.12}
+body>*{position:relative;z-index:1}
 .ko{font-family:var(--ko)}
-h1,h2,h3{text-wrap:balance;margin:0;line-height:1.25}
+h1,h2,h3{text-wrap:balance;margin:0;line-height:1.2}
+h2{font-family:var(--display);font-weight:700;letter-spacing:.005em}
 button{font:inherit;cursor:pointer}
-input{font:inherit}
-a{color:var(--accent)}
+input,textarea{font:inherit}
+a{color:var(--teal)}
 .hidden{display:none!important}
 
-header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
-.top-inner{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px 0}
-.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.brand h1{font-family:var(--ko-display);font-size:22px;letter-spacing:.01em}
-.brand h1 small{font-family:var(--body);font-weight:500;font-size:13px;color:var(--muted);margin-left:8px;letter-spacing:.06em;text-transform:uppercase}
-.sync{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
-.sync i{width:8px;height:8px;border-radius:50%;background:var(--muted);display:inline-block}
+/* шапка */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:2px solid var(--ink);box-shadow:0 3px 0 var(--shadow)}
+.top-inner{max-width:780px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:10px 0}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand h1{font-family:var(--ko-display);font-size:24px;letter-spacing:.01em;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.brand h1 small{font-family:var(--label);font-weight:500;font-size:12px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase}
+.sync{font-family:var(--label);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:6px}
+.sync i{width:9px;height:9px;border-radius:50%;background:var(--muted);display:inline-block;border:1.5px solid var(--ink)}
 .sync.ok i{background:var(--ok)} .sync.err i{background:var(--bad)} .sync.local i{background:var(--warn)}
-nav.tabs{display:flex;gap:2px;margin-top:8px;overflow-x:auto}
-nav.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:8px 12px;color:var(--muted);font-weight:500;white-space:nowrap}
-nav.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent)}
-nav.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:6px}
+nav.tabs{display:flex;gap:4px;margin-top:8px;overflow-x:auto;scrollbar-width:none}
+nav.tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:8px 12px;color:var(--muted);font-family:var(--label);font-weight:500;letter-spacing:.1em;text-transform:uppercase;font-size:13px;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+nav.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:4px}
 
-main{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
-section.view{display:flex;flex-direction:column;gap:20px}
-.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+main{max-width:780px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:22px 56px}
+section.view{display:flex;flex-direction:column;gap:22px}
+.eyebrow{font-family:var(--label);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.eyebrow.ink{color:var(--fg)}
 .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .grow{flex:1;min-width:0}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
-.stat{padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
-.stat b{display:block;font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
-.stat span{font-size:13px;color:var(--muted)}
-.bar{height:8px;background:var(--surface-2);border-radius:99px;overflow:hidden}
-.bar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .4s}
-.bar.ok i{background:var(--ok)} .bar.warn i{background:var(--warn)}
-.btn{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:10px;padding:10px 16px;font-weight:500;display:inline-flex;align-items:center;gap:8px}
-.btn:hover{border-color:var(--accent)}
-.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.btn.primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
-.btn.ghost{border-color:transparent;background:transparent;color:var(--accent);padding-inline:8px}
-.btn:disabled{opacity:.5;cursor:default}
-.chip{display:inline-block;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
-.chip.ok{background:var(--ok-soft);color:var(--ok)} .chip.warn{background:var(--warn-soft);color:var(--warn)} .chip.acc{background:var(--accent-soft);color:var(--accent)} .chip.bad{background:var(--bad-soft);color:var(--bad)}
 .muted{color:var(--muted)} .small{font-size:13px}
 
-/* topic list */
-.level{border-top:1px solid var(--line);padding-top:14px}
-.level-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:8px}
-.level-head h2{font-size:17px}
-.topic{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:10px 4px;border-bottom:1px dashed var(--line);text-align:left;background:none;border-top:0;border-left:0;border-right:0;width:100%;color:inherit}
-.topic:hover{background:var(--surface-2)}
+/* панель вебтуна: тушевой контур и жёсткая тень */
+.panel{background:var(--surface);border:2px solid var(--ink);border-radius:var(--radius);box-shadow:6px 6px 0 var(--shadow);padding:18px;position:relative}
+.panel.soft{box-shadow:none;border-color:var(--line)}
+.panel.flat{box-shadow:none}
+.panel-art{position:relative;margin:-18px -18px 16px;border-bottom:2px solid var(--ink);overflow:hidden;background:var(--surface-2);line-height:0}
+.panel-art svg{width:100%;height:auto;display:block}
+.panel-art.short svg{max-height:150px;object-fit:cover}
+.caption{position:absolute;top:10px;left:10px;line-height:1.5;z-index:1;background:var(--surface);border:2px solid var(--ink);padding:3px 9px;font-family:var(--label);font-size:11px;letter-spacing:.14em;text-transform:uppercase;box-shadow:3px 3px 0 var(--shadow)}
+.caption .ko{font-family:var(--ko);letter-spacing:0;text-transform:none;font-weight:700;margin-right:6px}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px}
+.stat{padding:12px 14px;border:2px solid var(--ink);border-radius:var(--radius);background:var(--surface);box-shadow:4px 4px 0 var(--shadow)}
+.stat b{display:block;font-family:var(--display);font-size:32px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.stat span{font-family:var(--label);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.bar{height:10px;background:var(--surface-2);border:1.5px solid var(--ink);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .4s;background-image:repeating-linear-gradient(135deg,transparent 0 6px,rgba(0,0,0,.12) 6px 8px)}
+.bar.ok i{background-color:var(--ok)} .bar.warn i{background-color:var(--rust)} .bar.teal i{background-color:var(--teal)}
+
+/* DE-подобные навыки: три голоса */
+.skills{display:grid;gap:10px}
+.skill{display:grid;grid-template-columns:120px 1fr auto;gap:10px;align-items:center}
+.skill .nm{font-family:var(--label);font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+.skill .lv{font-family:var(--display);font-style:italic;font-size:15px;color:var(--muted);white-space:nowrap}
+@media (max-width:480px){.skill{grid-template-columns:96px 1fr auto}}
+
+.btn{border:2px solid var(--ink);background:var(--surface);color:var(--fg);border-radius:var(--radius);padding:9px 16px;font-family:var(--label);font-weight:500;letter-spacing:.08em;text-transform:uppercase;font-size:13px;display:inline-flex;align-items:center;gap:8px;box-shadow:3px 3px 0 var(--shadow);transition:transform .08s,box-shadow .08s}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--shadow)}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--shadow)}
+.btn:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.btn.primary{background:var(--accent);color:var(--accent-fg)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--teal);box-shadow:none;padding-inline:6px}
+.btn.ghost:hover{transform:none;box-shadow:none;text-decoration:underline}
+.btn:disabled{opacity:.5;cursor:default;transform:none}
+.btn .ko{text-transform:none;letter-spacing:0;font-family:var(--ko)}
+.chip{display:inline-block;font-family:var(--label);font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:500;padding:2px 8px;border-radius:2px;border:1.5px solid var(--ink);background:var(--surface-2);color:var(--fg);white-space:nowrap}
+.chip.ok{background:var(--ok-soft);color:var(--ok)} .chip.warn{background:var(--warn-soft);color:var(--warn)} .chip.acc{background:var(--accent-soft);color:var(--fg)} .chip.bad{background:var(--bad-soft);color:var(--bad)} .chip.teal{background:var(--teal-soft);color:var(--teal)}
+
+/* главы и темы */
+.level{border-top:2px solid var(--ink);padding-top:14px}
+.level-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.level-head h2{font-size:24px}
+.topic{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:10px 6px;border:0;border-bottom:1.5px dashed var(--line);text-align:left;background:none;width:100%;color:inherit;border-radius:0}
+.topic:hover{background:var(--surface)}
 .topic .t{font-family:var(--ko);font-weight:500;font-size:16px}
 .topic .n{font-size:13px;color:var(--muted);grid-column:1}
-.topic .bar{width:72px;grid-column:2;grid-row:2}
+.topic .bar{width:72px;grid-column:2;grid-row:2;height:8px}
 .topic .chip{grid-column:2;grid-row:1;justify-self:end}
 
-/* lesson */
-.lesson h2{font-family:var(--ko);font-size:26px;font-weight:700}
-.lesson .sub{color:var(--muted);margin-top:2px}
+/* урок */
+.lesson h2{font-family:var(--ko);font-size:28px;font-weight:700}
+.lesson .sub{color:var(--muted);margin-top:2px;font-family:var(--display);font-style:italic;font-size:18px}
 .lesson p{max-width:65ch}
-.formula{font-family:var(--ko);background:var(--surface-2);border-left:3px solid var(--accent);padding:10px 14px;border-radius:0 8px 8px 0;font-weight:500}
-.examples{display:flex;flex-direction:column;gap:10px;margin:0;padding:0;list-style:none}
-.examples li{display:grid;gap:2px}
-.examples .k{font-family:var(--ko);font-size:18px;font-weight:500}
-.examples .r{color:var(--muted);font-size:14px}
-.ai-box{background:var(--surface-2);border-radius:10px;padding:14px;white-space:pre-wrap;font-size:15px;max-width:65ch}
+.formula{font-family:var(--ko);background:var(--surface-2);border:2px solid var(--ink);border-left-width:8px;padding:10px 14px;border-radius:var(--radius);font-weight:500}
+.examples{display:grid;gap:12px;margin:0;padding:0;list-style:none}
+.examples li{display:grid;gap:4px;justify-items:start;max-width:92%}
+.examples li:nth-child(even){justify-self:end;justify-items:end}
+.examples .k{font-family:var(--ko);font-size:18px;font-weight:500;background:var(--surface);border:2px solid var(--ink);border-radius:14px;padding:8px 14px;position:relative;box-shadow:3px 3px 0 var(--shadow)}
+.examples .k::after{content:"";position:absolute;left:18px;bottom:-9px;width:12px;height:12px;background:var(--surface);border-right:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:rotate(45deg)}
+.examples li:nth-child(even) .k::after{left:auto;right:18px}
+.examples .r{color:var(--muted);font-size:14px;padding-inline:6px}
+.ai-box{background:var(--surface-2);border:2px solid var(--ink);border-radius:var(--radius);padding:14px;white-space:pre-wrap;font-size:15px;max-width:68ch}
 .ai-box:empty{display:none}
 
-/* exercise */
+/* упражнение */
 .ex-head{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
-.ex-q{font-size:20px;font-weight:500;margin-top:14px;line-height:1.45}
-.ex-q .ko{font-size:22px}
-.options{display:grid;gap:8px;margin-top:14px}
-.opt{text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-family:var(--ko);font-size:17px;color:inherit}
-.opt:hover{border-color:var(--accent)}
-.opt.right{border-color:var(--ok);background:var(--ok-soft)} .opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
-.answer{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
-.answer input{flex:1;min-width:200px;padding:11px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:inherit;font-family:var(--ko);font-size:17px}
-.answer input:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
-.fb{margin-top:14px;padding:12px 14px;border-radius:10px;font-size:15px}
-.fb.ok{background:var(--ok-soft);color:var(--ok)} .fb.bad{background:var(--bad-soft);color:var(--bad)} .fb.neutral{background:var(--surface-2);color:var(--fg)}
-.fb .ko{font-size:17px;font-weight:500;color:var(--fg)}
-.fb .why{display:block;margin-top:6px;color:var(--fg);opacity:.85}
-.progress-dots{display:flex;gap:5px}
-.progress-dots i{width:9px;height:9px;border-radius:50%;background:var(--surface-2);display:inline-block}
-.progress-dots i.ok{background:var(--ok)} .progress-dots i.bad{background:var(--bad)} .progress-dots i.cur{background:var(--accent)}
+.bubble{margin-top:16px;background:var(--surface);border:2px solid var(--ink);border-radius:16px;padding:14px 18px;position:relative;box-shadow:4px 4px 0 var(--shadow);font-size:19px;font-weight:500;line-height:1.5;white-space:pre-line}
+.bubble::after{content:"";position:absolute;left:26px;bottom:-10px;width:14px;height:14px;background:var(--surface);border-right:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:rotate(45deg)}
+.bubble .ko,.bubble.ko{font-size:21px}
+.reading{margin-top:16px;background:var(--surface-2);border:2px solid var(--ink);border-radius:var(--radius);padding:16px 18px;font-family:var(--ko);font-size:18px;line-height:1.8;white-space:pre-line;position:relative;box-shadow:4px 4px 0 var(--shadow)}
+.reading::before{content:"읽기";position:absolute;top:-12px;left:12px;background:var(--accent);color:var(--accent-fg);border:2px solid var(--ink);font-size:11px;font-family:var(--label);letter-spacing:.14em;padding:1px 8px}
+.reading.dialog::before{content:"대화"}
+.task{margin-top:14px;font-size:17px;white-space:pre-line}
+.options{display:grid;gap:8px;margin-top:16px}
+.opt{text-align:left;padding:12px 14px;border:2px solid var(--ink);border-radius:var(--radius);background:var(--surface);font-family:var(--ko);font-size:17px;color:inherit;box-shadow:3px 3px 0 var(--shadow)}
+.opt:hover{background:var(--surface-2)}
+.opt.right{background:var(--ok-soft);border-color:var(--ok)} .opt.wrong{background:var(--bad-soft);border-color:var(--bad)}
+.answer{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;align-items:flex-start}
+.answer input,.answer textarea{flex:1;min-width:200px;padding:11px 14px;border:2px solid var(--ink);border-radius:var(--radius);background:var(--surface);color:inherit;font-family:var(--ko);font-size:17px;box-shadow:inset 3px 3px 0 var(--surface-2)}
+.answer textarea{min-height:92px;resize:vertical;line-height:1.5;width:100%}
+.answer input:focus,.answer textarea:focus{outline:2px solid var(--teal);outline-offset:0}
+.tokens{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.tok{font-family:var(--ko);font-size:17px;padding:7px 12px;border:2px solid var(--ink);border-radius:var(--radius);background:var(--surface);color:inherit;box-shadow:3px 3px 0 var(--shadow)}
+.tok:disabled{opacity:.25;box-shadow:none}
+.built{min-height:50px;margin-top:14px;padding:8px 10px;border:2px dashed var(--ink);border-radius:var(--radius);display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-family:var(--ko);font-size:18px}
+.built:empty::before{content:"Собирайте предложение из слов ниже";font-family:var(--body);font-size:14px;color:var(--muted)}
+.built .tok{background:var(--accent-soft)}
+
+/* «проверка навыка» */
+.check{margin-top:16px;border:2px solid var(--ink);border-radius:var(--radius);overflow:hidden;box-shadow:4px 4px 0 var(--shadow)}
+.check .head{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 14px;font-family:var(--label);letter-spacing:.14em;text-transform:uppercase;font-size:12px;color:var(--accent-fg);background:var(--accent)}
+.check.ok .head{background:var(--ok);color:#fff} .check.bad .head{background:var(--rust);color:#fff} .check.neutral .head{background:var(--teal);color:#fff}
+.check .body{padding:12px 14px;background:var(--surface);font-size:15px}
+.check .body .ko{font-size:17px;font-weight:500}
+.check .why{display:block;margin-top:8px;color:var(--fg);opacity:.9}
+.check .quote{font-family:var(--display);font-style:italic;font-size:17px;display:block;margin-bottom:6px}
+.progress-dots{display:flex;gap:5px;flex-wrap:wrap}
+.progress-dots i{width:11px;height:11px;border-radius:50%;border:1.5px solid var(--ink);background:var(--surface-2);display:inline-block}
+.progress-dots i.ok{background:var(--ok)} .progress-dots i.bad{background:var(--rust)} .progress-dots i.cur{background:var(--accent)}
 .loader{display:flex;align-items:center;gap:10px;color:var(--muted)}
 .loader i{width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;display:inline-block}
 @keyframes spin{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.loader i{animation:none}.bar i{transition:none}}
+@media (prefers-reduced-motion:reduce){.loader i{animation:none}.bar i{transition:none}.btn{transition:none}}
 
-/* flashcards */
-.flash{min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;cursor:pointer;user-select:none;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;width:100%;color:inherit}
-.flash .w{font-family:var(--ko-display);font-size:40px;font-weight:700}
-.flash .m{font-size:20px}
-.flash .hint{font-size:13px;color:var(--muted)}
+/* карточки слов */
+.flash{min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;cursor:pointer;user-select:none;background:var(--surface);border:2px solid var(--ink);border-radius:var(--radius);padding:24px;width:100%;color:inherit;box-shadow:6px 6px 0 var(--shadow);
+  background-image:radial-gradient(circle at 1px 1px,var(--line) 1px,transparent 1.5px);background-size:14px 14px}
+.flash .w{font-family:var(--ko-display);font-size:44px;font-weight:800;background:var(--surface);padding:4px 14px;border:2px solid var(--ink)}
+.flash .m{font-size:20px;background:var(--surface);padding:2px 10px}
+.flash .hint{font-size:13px;color:var(--muted);background:var(--surface);padding:0 8px}
 .vocab-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px 16px;font-size:15px}
-.vocab-list div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dashed var(--line);padding:4px 0}
+.vocab-list div{display:flex;justify-content:space-between;gap:8px;border-bottom:1.5px dashed var(--line);padding:4px 0}
 .vocab-list .ko{font-weight:500}
 .box-dots{display:inline-flex;gap:2px;margin-left:6px;vertical-align:middle}
 .box-dots i{width:5px;height:5px;border-radius:50%;background:var(--line);display:inline-block}
 .box-dots i.on{background:var(--ok)}
-
-.errors li{padding:6px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.errors li{padding:6px 0;border-bottom:1.5px dashed var(--line);font-size:14px}
 .errors .ko{font-size:16px}
-.notice{padding:12px 14px;border-radius:10px;background:var(--warn-soft);color:var(--warn);font-size:14px}
+.notice{padding:12px 14px;border:2px solid var(--ink);border-radius:var(--radius);background:var(--warn-soft);color:var(--fg);font-size:14px}
 ul.plain{margin:0;padding-left:18px}
-@media (max-width:480px){.lesson h2{font-size:22px}.ex-q{font-size:18px}.flash .w{font-size:32px}}
-html,body{height:100%}
+
+/* вход */
 .gate{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px max(16px,env(safe-area-inset-left,0px))}
-.gate-card{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:26px;display:grid;gap:14px}
-.gate-card h1{font-family:var(--ko-display);font-size:28px}
+.gate-card{width:100%;max-width:440px;display:grid;gap:14px}
+.gate-card h1{font-family:var(--ko-display);font-size:30px}
 .gate-card form{display:flex;gap:8px;flex-wrap:wrap}
-.gate-card input{flex:1;min-width:160px;padding:11px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:inherit;font-size:17px}
-.gate-card input:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+.gate-card input{flex:1;min-width:160px;padding:11px 14px;border:2px solid var(--ink);border-radius:var(--radius);background:var(--surface);color:inherit;font-size:17px}
+.gate-card input:focus{outline:2px solid var(--teal);outline-offset:0}
+@media (max-width:480px){.lesson h2{font-size:23px}.bubble{font-size:17px}.bubble .ko,.bubble.ko{font-size:19px}.flash .w{font-size:34px}.panel{padding:14px}.panel-art{margin:-14px -14px 14px}}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <pattern id="dots" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1.1" fill="var(--ink)" opacity=".35"/></pattern>
+  <pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="var(--ink)" stroke-width="1.2" opacity=".3"/></pattern>
+  <filter id="grain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" stitchTiles="stitch" result="n"/><feColorMatrix in="n" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .5 0" result="g"/><feComposite in="g" in2="SourceGraphic" operator="in"/></filter>
+  <filter id="wobble"><feTurbulence type="turbulence" baseFrequency=".035" numOctaves="1" seed="3" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="1.8"/></filter>
+</defs></svg>
 <div id="gate" class="gate hidden"></div>
 
 <header class="top hidden"><div class="top-inner">
   <div class="brand">
-    <h1 class="ko">한국어 → B1 <small>Личный учебник</small></h1>
+    <h1><span class="ko">한국어 → B1</span><small>Учебник повседневной Кореи</small></h1>
     <div class="sync" id="sync"><i></i><span>Загрузка…</span></div>
   </div>
   <nav class="tabs" role="tablist" id="tabs">
@@ -618,18 +684,129 @@ const T=[
 /* ============ СЛОВАРЬ ИЗ КОНСПЕКТА ============ */
 const VOCAB=[['사다','покупать'],['마시다','пить'],['좋아하다','любить, нравиться'],['좋다','хороший'],['미역국','суп из морской капусты'],['만들다','делать, готовить'],['기다리다','ждать'],['부부','супруги'],['밥','рис, еда'],['책','книга'],['읽다','читать'],['소주','соджу'],['물','вода'],['커피','кофе'],['계란','яйцо'],['고기','мясо'],['운동하다','заниматься спортом'],['공부하다','учиться'],['게임하다','играть в игры'],['부모님','родители'],['장모님','тёща'],['층','этаж'],['얼마예요?','сколько стоит?'],['병원','больница'],['다치다','пораниться'],['발목','лодыжка'],['가다','идти, ехать'],['먹다','есть'],['자다','спать'],['요리하다','готовить (еду)'],['일하다','работать'],['쉬다','отдыхать'],['시작하다','начинать'],['끝나다','заканчиваться'],['앉다','сидеть, садиться'],['말하다','говорить'],['만나다','встречаться'],['일어나다','вставать'],['음식','еда'],['산책하다','гулять'],['음악','музыка'],['듣다','слушать'],['그리고','и'],['그런데','но, кстати'],['그러면 (그럼)','тогда, в таком случае'],['혼자','один, в одиночку'],['사람','человек'],['친구','друг'],['모르겠어요','не знаю'],['청소하다','убираться'],['맵다','острый'],['떡볶이','ттокпокки'],['기차','поезд'],['운동','спорт'],['쓰다','писать; носить; использовать'],['보다','смотреть, видеть'],['노래','песня'],['이메일','электронная почта'],['요즘','в последнее время'],['맛있게 드세요','приятного аппетита'],['옷','одежда'],['특히','особенно'],['초밥','суши'],['같이','вместе'],['항상','всегда'],['치약','зубная паста'],['살','лет (возраст)'],['개','штука (счётное)'],['명','человек (счётное)'],['잔','чашка, стакан (счётное)'],['시','час'],['분','минута'],['오전','до полудня'],['오후','после полудня'],['아침','утро'],['낮','день (светлое время)'],['저녁','вечер'],['밤','ночь'],['새벽','рассвет, раннее утро'],['지갑','кошелёк'],['침대','кровать'],['전화하다','звонить'],['아내','жена'],['맛있다','вкусный'],['멋있다','классный, стильный'],['가방','сумка'],['약국','аптека'],['옆','рядом, сбоку'],['집','дом'],['방','комната'],['거실','гостиная'],['부엌','кухня'],['화장실','туалет'],['위','верх, на'],['아래 / 밑','низ, под'],['앞','перед'],['뒤','за, сзади'],['안','внутри'],['밖','снаружи'],['나무','дерево'],['냉장고','холодильник'],['우유','молоко'],['토마토','помидор'],['비싸다','дорогой'],['살다','жить'],['있다','быть, иметься'],['없다','не быть, отсутствовать'],['맛없다','невкусный'],['책상','письменный стол'],['의자','стул'],['전화번호','номер телефона'],['다니다','ходить регулярно, посещать'],['여기','здесь'],['식당','ресторан, столовая'],['오랜만이에요','давно не виделись'],['결혼하다','жениться, выходить замуж'],['어디','где, куда'],['누구','кто'],['뭐','что'],['우리','мы, наш'],['언니','старшая сестра (для девушки)'],['누나','старшая сестра (для парня)'],['동생','младший брат или сестра'],['오빠','старший брат (для девушки)'],['형','старший брат (для парня)'],['운동화','кроссовки'],['선생님','учитель'],['할아버지','дедушка'],['할머니','бабушка'],['감사합니다','спасибо'],['러시아','Россия'],['어제','вчера'],['오늘','сегодня'],['내일','завтра'],['영화','фильм'],['생선','рыба (как еда)'],['돈','деньги'],['많이','много'],['술','алкоголь'],['맥주','пиво'],['더','ещё, больше'],['또','снова, ещё раз'],['주세요','дайте, пожалуйста'],['잡채','чапчхэ'],['김치','кимчи'],['돼지고기','свинина'],['무슨','какой'],['춥다','холодный'],['미국','США'],['영국','Великобритания'],['중국','Китай'],['독일','Германия'],['호주','Австралия'],['일본','Япония'],['태국','Таиланд'],['모자','шапка, шляпа'],['신발','обувь'],['이거','это'],['가수','певец'],['이름','имя'],['공원','парк'],['마트','супермаркет'],['지금','сейчас'],['여자친구','девушка (партнёрша)'],['남자친구','парень (партнёр)'],['나라','страна'],['엄마','мама'],['아빠','папа'],['달걀','яйцо'],['차','чай; машина'],['주스','сок'],['사과','яблоко'],['오렌지','апельсин'],['빵','хлеб'],['담배','сигареты'],['아이스크림','мороженое'],['핸드폰','мобильный телефон'],['컴퓨터','компьютер'],['볼펜','шариковая ручка'],['생일','день рождения'],['언제','когда'],['왜','почему'],['몇','сколько'],['학생','студент, ученик'],['회사','компания, работа'],['주말','выходные'],['시간','время'],['날씨','погода'],['숙제','домашнее задание'],['수업','урок, занятие'],['지하철','метро'],['버스','автобус'],['사진','фотография'],['문','дверь'],['창문','окно'],['약','лекарство'],['피곤하다','уставший'],['바쁘다','занятой'],['재미있다','интересный'],['어렵다','трудный'],['쉽다','лёгкий'],['빠르다','быстрый'],['예쁘다','красивый'],['아프다','болеть, болит']];
 
+/* ============ СЦЕНЫ ПОВСЕДНЕВНОЙ КОРЕИ ============ */
+// id, ko (место), ru (название), d (реалии для генератора; коротко, чтобы экономить токены)
+const SCENES=[
+{id:'store',ko:'편의점',ru:'Круглосуточный магазин',d:'ночной 편의점 (GS25/CU): 삼각김밥, 컵라면, акция 1+1, 포인트 적립, «봉투 필요하세요?», 전자레인지, кассир-알바생'},
+{id:'subway',ko:'지하철',ru:'Метро и дорога',d:'서울 지하철: 2호선, 환승, 교통카드 충전, 노약자석, час пик, «이번 역은…», опоздание на работу'},
+{id:'cafe',ko:'카페',ru:'Кафе',d:'카페: 아이스 아메리카노, «드시고 가세요? 포장이세요?», 진동벨, 카공 (учёба в кафе), 텀블러 할인, 디저트'},
+{id:'room',ko:'원룸',ru:'Съёмная квартира',d:'원룸/오피스텔: 월세, 보증금, 관리비, 집주인, 분리수거, 보일러 сломался, соседи шумят, 택배 у двери'},
+{id:'delivery',ko:'배달',ru:'Доставка еды',d:'배달 앱 (배달의민족): 배달비, «문 앞에 놓아 주세요», 리뷰 이벤트, 치킨, 떡볶이, курьер на скутере, минимальный заказ'},
+{id:'market',ko:'시장',ru:'Рынок и супермаркет',d:'전통시장 и 마트: «좀 깎아 주세요», 한 근, 덤, 시식, 이마트 выходной, 장바구니, сезонные фрукты'},
+{id:'clinic',ko:'병원·약국',ru:'Поликлиника и аптека',d:'병원/약국: 접수, 건강보험, 처방전, «하루 세 번 식후에 드세요», 감기, 주사, 진료비, запись к врачу'},
+{id:'office',ko:'회사',ru:'Офис и работа',d:'회사: 출근/퇴근, 야근, 회식, 대리님/과장님, 눈치, 점심 메뉴 выбор, 연차 (отгул), 재택근무'},
+{id:'river',ko:'한강 공원',ru:'Парк на Хангане',d:'한강 공원: 치맥, 돗자리, 자전거 대여, 편의점 라면, 미세먼지, закат, выходные с друзьями'},
+{id:'food',ko:'식당',ru:'Ресторан',d:'식당: 삼겹살 2인분, 셀프바, 반찬 리필, «계산은 카운터에서», 더치페이, 이모님, 쌈, 소주 한 잔'},
+{id:'bank',ko:'은행·주민센터',ru:'Банк и администрация',d:'은행/주민센터: 외국인등록증, 통장 개설, 번호표, 비자 연장, 서류, 공인인증서, очередь, 신분증'},
+{id:'weather',ko:'날씨',ru:'Погода и сезоны',d:'날씨: 장마, 폭염, 황사/미세먼지, 첫눈, 패딩, 우산 забыл, 벚꽃, 단풍, прогноз в приложении'},
+{id:'phone',ko:'카톡',ru:'Телефон и мессенджеры',d:'카카오톡: 단톡방, 읽씹, 이모티콘, 데이터 요금제, 배터리, 번호 바꿨어요, видеозвонок родителям, 네이버 지도'},
+{id:'bus',ko:'버스 정류장',ru:'Автобус',d:'버스: 정류장, 마을버스, 하차 벨, «뒷문으로 내리세요», 교통카드 찍기, 막차, 환승 할인, пробки'}
+];
+const sceneById=Object.fromEntries(SCENES.map(s=>[s.id,s]));
+// силуэт человека (тушь)
+const person=(x,y,s=1,fill='var(--ink)')=>`<g transform="translate(${x},${y}) scale(${s})" fill="${fill}"><circle cx="0" cy="-30" r="7"/><path d="M-8,-22 h16 l4,26 h-5 l-2,22 h-4 l-1,-20 h-0 l-1,20 h-4 l-2,-22 h-5z"/></g>`;
+const win=(x,y,w,h,f='var(--accent-soft)')=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${f}" stroke="var(--ink)" stroke-width="2"/>`;
+const ART={
+store:()=>`<rect width="320" height="160" fill="var(--bg-2)"/><circle cx="296" cy="36" r="16" fill="var(--accent)" opacity=".35"/><rect y="118" width="320" height="42" fill="var(--surface-2)"/><rect y="118" width="320" height="42" fill="url(#dots)"/>
+<rect x="36" y="28" width="204" height="92" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/><rect x="36" y="28" width="204" height="22" fill="var(--teal)" stroke="var(--ink)" stroke-width="3"/><rect x="48" y="34" width="54" height="10" fill="var(--accent)"/><rect x="108" y="34" width="26" height="10" fill="var(--rust)"/><text x="196" y="45" font-family="Oswald,Impact,sans-serif" font-size="13" fill="var(--surface)" letter-spacing="2">24</text>
+<rect x="52" y="60" width="112" height="58" fill="var(--accent-soft)" stroke="var(--ink)" stroke-width="3"/>${[76,92,108].map(y=>`<line x1="58" y1="${y}" x2="158" y2="${y}" stroke="var(--ink)" stroke-width="2"/>`).join('')}
+${[[62,66,'var(--teal)'],[76,66,'var(--rust)'],[90,66,'var(--accent)'],[104,66,'var(--teal)'],[62,82,'var(--rust)'],[80,82,'var(--accent)'],[98,82,'var(--ok)'],[118,82,'var(--rust)'],[66,98,'var(--accent)'],[86,98,'var(--teal)'],[108,98,'var(--rust)']].map(([x,y,c])=>`<rect x="${x}" y="${y}" width="10" height="9" fill="${c}" stroke="var(--ink)" stroke-width="1.2"/>`).join('')}
+<rect x="180" y="62" width="46" height="56" fill="var(--accent-soft)" stroke="var(--ink)" stroke-width="3"/><line x1="203" y1="62" x2="203" y2="118" stroke="var(--ink)" stroke-width="2"/><circle cx="198" cy="92" r="2" fill="var(--ink)"/>
+${person(266,118,1)}<line x1="300" y1="40" x2="300" y2="118" stroke="var(--ink)" stroke-width="3"/><rect x="292" y="34" width="16" height="8" fill="var(--ink)"/>`,
+subway:()=>`<rect width="320" height="160" fill="var(--surface-2)"/><path d="M14,160 A146,146 0 0 1 306,160Z" fill="var(--bg-2)" stroke="var(--ink)" stroke-width="3"/><path d="M14,160 A146,146 0 0 1 306,160Z" fill="url(#hatch)"/>
+<rect x="98" y="56" width="124" height="96" rx="12" fill="var(--teal)" stroke="var(--ink)" stroke-width="3"/><rect x="110" y="66" width="100" height="38" rx="4" fill="var(--accent-soft)" stroke="var(--ink)" stroke-width="2"/><rect x="98" y="112" width="124" height="6" fill="var(--ink)"/>
+<circle cx="118" cy="132" r="8" fill="var(--accent)" stroke="var(--ink)" stroke-width="2"/><circle cx="202" cy="132" r="8" fill="var(--accent)" stroke="var(--ink)" stroke-width="2"/><circle cx="160" cy="132" r="12" fill="var(--ok)" stroke="var(--ink)" stroke-width="2"/><text x="160" y="137" text-anchor="middle" font-family="Oswald,Impact,sans-serif" font-size="14" fill="#fff">2</text>
+${person(136,100,0.6,'var(--ink-2)')}${person(184,100,0.6,'var(--ink-2)')}
+<rect y="148" width="320" height="4" fill="var(--accent)"/><rect y="152" width="320" height="8" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/>`,
+cafe:()=>`<rect width="320" height="160" fill="var(--surface-2)"/><rect x="18" y="16" width="136" height="84" fill="var(--bg-2)" stroke="var(--ink)" stroke-width="3"/><line x1="86" y1="16" x2="86" y2="100" stroke="var(--ink)" stroke-width="2"/><line x1="18" y1="58" x2="154" y2="58" stroke="var(--ink)" stroke-width="2"/><rect x="18" y="16" width="136" height="84" fill="url(#dots)" opacity=".5"/>
+<line x1="250" y1="0" x2="250" y2="34" stroke="var(--ink)" stroke-width="3"/><path d="M228,56 L250,30 L272,56Z" fill="var(--accent)" stroke="var(--ink)" stroke-width="3"/><circle cx="250" cy="62" r="18" fill="var(--accent)" opacity=".25"/>
+<rect x="190" y="38" width="46" height="44" fill="var(--ink)" rx="2"/>${[48,58,68].map(y=>`<line x1="196" y1="${y}" x2="${y===58?222:230}" y2="${y}" stroke="var(--surface)" stroke-width="2"/>`).join('')}
+<rect y="100" width="320" height="60" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/><rect y="100" width="320" height="10" fill="var(--bg-2)" stroke="var(--ink)" stroke-width="3"/>
+<rect x="166" y="74" width="42" height="28" rx="5" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/><path d="M208,80 a8,8 0 0 1 0,16" fill="none" stroke="var(--ink)" stroke-width="3"/><path d="M176,66 q4,-6 0,-12 M188,66 q4,-6 0,-12 M198,66 q4,-6 0,-12" fill="none" stroke="var(--ink)" stroke-width="2"/>
+<rect x="60" y="120" width="54" height="34" fill="var(--teal)" stroke="var(--ink)" stroke-width="2"/><rect x="66" y="126" width="42" height="22" fill="var(--accent-soft)"/>${person(40,100,.7)}`,
+room:()=>`<rect width="320" height="160" fill="var(--surface-2)"/><rect y="118" width="320" height="42" fill="var(--bg-2)" stroke="var(--ink)" stroke-width="3"/><rect y="118" width="320" height="42" fill="url(#hatch)" opacity=".5"/>
+<rect x="200" y="18" width="92" height="70" fill="var(--bg-2)" stroke="var(--ink)" stroke-width="3"/><circle cx="268" cy="42" r="11" fill="var(--accent)" stroke="var(--ink)" stroke-width="2"/><line x1="246" y1="18" x2="246" y2="88" stroke="var(--ink)" stroke-width="2"/><line x1="200" y1="54" x2="292" y2="54" stroke="var(--ink)" stroke-width="2"/>
+<rect x="16" y="86" width="130" height="40" rx="3" fill="var(--teal)" stroke="var(--ink)" stroke-width="3"/><rect x="16" y="86" width="130" height="40" fill="url(#hatch)" opacity=".4"/><rect x="24" y="78" width="40" height="14" rx="3" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/>
+<rect x="170" y="100" width="124" height="7" fill="var(--ink)"/><line x1="178" y1="107" x2="178" y2="130" stroke="var(--ink)" stroke-width="3"/><line x1="286" y1="107" x2="286" y2="130" stroke="var(--ink)" stroke-width="3"/>
+<rect x="196" y="76" width="54" height="24" rx="2" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/><rect x="200" y="80" width="46" height="16" fill="var(--accent-soft)"/>
+<rect x="258" y="84" width="22" height="16" rx="3" fill="var(--rust)" stroke="var(--ink)" stroke-width="2"/><rect x="150" y="128" width="30" height="24" fill="var(--accent)" stroke="var(--ink)" stroke-width="2"/><line x1="165" y1="128" x2="165" y2="152" stroke="var(--ink)" stroke-width="2"/>`,
+delivery:()=>`<rect width="320" height="160" fill="var(--bg-2)"/>${[[10,40,50],[70,20,70],[130,50,40],[250,30,60]].map(([x,y,w])=>`<rect x="${x}" y="${y}" width="${w}" height="${120-y}" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/>`).join('')}
+${[[18,48],[34,48],[18,66],[34,66],[80,30],[98,30],[116,30],[80,50],[116,50],[80,70],[98,70],[140,60],[156,60],[258,40],[276,40],[294,40],[258,62],[294,62],[258,84]].map(([x,y])=>`<rect x="${x}" y="${y}" width="10" height="10" fill="var(--accent)" opacity=".8"/>`).join('')}
+<rect y="118" width="320" height="42" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="3"/><line x1="0" y1="140" x2="320" y2="140" stroke="var(--ink)" stroke-width="2" stroke-dasharray="14 10"/>
+<circle cx="150" cy="128" r="15" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/><circle cx="230" cy="128" r="15" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/><path d="M150,128 L172,100 L220,100 L230,128" fill="var(--teal)" stroke="var(--ink)" stroke-width="3"/><path d="M220,100 L236,88 L246,92" fill="none" stroke="var(--ink)" stroke-width="3"/>
+<rect x="132" y="80" width="40" height="30" fill="var(--accent)" stroke="var(--ink)" stroke-width="3"/><path d="M132,88 h40" stroke="var(--ink)" stroke-width="2"/>${person(200,100,.8)}
+<line x1="96" y1="110" x2="124" y2="110" stroke="var(--ink)" stroke-width="2"/><line x1="90" y1="120" x2="120" y2="120" stroke="var(--ink)" stroke-width="2"/>`,
+market:()=>`<rect width="320" height="160" fill="var(--surface-2)"/><rect width="320" height="38" fill="var(--rust)" stroke="var(--ink)" stroke-width="3"/>${[0,80,160,240].map(x=>`<rect x="${x+40}" y="0" width="40" height="38" fill="var(--surface)"/>`).join('')}${[20,60,100,140,180,220,260,300].map(x=>`<circle cx="${x}" cy="38" r="20" fill="${(x/40)%2?'var(--surface)':'var(--rust)'}" stroke="var(--ink)" stroke-width="3"/>`).join('')}
+<rect x="24" y="104" width="100" height="46" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/><rect x="24" y="104" width="100" height="46" fill="url(#hatch)" opacity=".6"/>${[[44,96],[64,96],[84,96],[104,96],[54,82],[74,82],[94,82]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="10" fill="var(--accent)" stroke="var(--ink)" stroke-width="2"/>`).join('')}
+<rect x="140" y="104" width="100" height="46" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/><rect x="140" y="104" width="100" height="46" fill="url(#hatch)" opacity=".6"/>${[[160,96],[180,96],[200,96],[220,96],[170,82],[190,82],[210,82]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="10" fill="var(--ok)" stroke="var(--ink)" stroke-width="2"/>`).join('')}
+<rect x="254" y="70" width="52" height="34" fill="var(--accent-soft)" stroke="var(--ink)" stroke-width="3"/><text x="280" y="94" text-anchor="middle" font-family="Oswald,Impact,sans-serif" font-size="16" fill="var(--rust)">₩</text><line x1="280" y1="38" x2="280" y2="70" stroke="var(--ink)" stroke-width="2"/>${person(290,150,.8)}`,
+clinic:()=>`<rect width="320" height="160" fill="var(--surface-2)"/><rect x="124" y="14" width="72" height="72" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/><rect x="150" y="24" width="20" height="52" fill="var(--rust)"/><rect x="134" y="40" width="52" height="20" fill="var(--rust)"/>
+<rect y="104" width="320" height="56" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/><rect y="104" width="320" height="10" fill="var(--teal)" stroke="var(--ink)" stroke-width="3"/>
+<rect x="36" y="56" width="34" height="48" rx="5" fill="var(--teal)" stroke="var(--ink)" stroke-width="3"/><rect x="42" y="48" width="22" height="10" fill="var(--ink)"/><rect x="42" y="70" width="22" height="18" fill="var(--surface)"/>
+${[[84,86],[100,74],[110,92]].map(([x,y],i)=>`<g transform="translate(${x},${y}) rotate(${i*30})"><rect x="-12" y="-5" width="24" height="10" rx="5" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/><path d="M-12,0 a5,5 0 0 1 5,-5 h7 v10 h-7 a5,5 0 0 1 -5,-5z" fill="var(--accent)"/></g>`).join('')}
+<rect x="232" y="46" width="48" height="58" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/><rect x="246" y="40" width="20" height="10" fill="var(--ink)"/>${[62,72,82,92].map(y=>`<line x1="240" y1="${y}" x2="${y===92?258:272}" y2="${y}" stroke="var(--ink)" stroke-width="2"/>`).join('')}${person(300,150,.7)}`,
+office:()=>`<rect width="320" height="160" fill="var(--bg-2)"/>${[[0,50,30],[36,30,40],[82,60,26],[114,20,44],[164,44,36],[206,28,50],[262,52,58]].map(([x,y,w])=>`<rect x="${x}" y="${y}" width="${w}" height="${96-y}" fill="var(--ink-2)" opacity=".55"/>`).join('')}
+<rect y="96" width="320" height="64" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/><rect y="96" width="320" height="8" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="3"/>
+<rect x="52" y="52" width="80" height="48" rx="3" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/><rect x="58" y="58" width="68" height="36" fill="var(--teal)"/>${[66,74,82].map(y=>`<line x1="64" y1="${y}" x2="${y===82?96:118}" y2="${y}" stroke="var(--surface)" stroke-width="2"/>`).join('')}
+<rect x="188" y="52" width="80" height="48" rx="3" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/><rect x="194" y="58" width="68" height="36" fill="var(--accent-soft)"/><path d="M200,88 L214,74 L226,82 L244,64 L256,70" fill="none" stroke="var(--rust)" stroke-width="2.5"/>
+<circle cx="292" cy="30" r="17" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/><line x1="292" y1="30" x2="292" y2="18" stroke="var(--ink)" stroke-width="2"/><line x1="292" y1="30" x2="301" y2="35" stroke="var(--ink)" stroke-width="2"/>
+<rect x="148" y="78" width="20" height="22" rx="3" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/>${person(160,96,.55,'var(--ink-2)')}`,
+river:()=>`<rect width="320" height="160" fill="var(--bg-2)"/><circle cx="270" cy="34" r="20" fill="var(--accent)" stroke="var(--ink)" stroke-width="3"/><circle cx="270" cy="34" r="30" fill="var(--accent)" opacity=".2"/>
+<line x1="0" y1="62" x2="320" y2="62" stroke="var(--ink)" stroke-width="4"/>${[40,140,240].map(x=>`<path d="M${x-40},100 A40,40 0 0 1 ${x+40},100" fill="none" stroke="var(--ink)" stroke-width="3"/>`).join('')}${[0,80,160,240,320].map(x=>`<line x1="${x}" y1="62" x2="${x}" y2="100" stroke="var(--ink)" stroke-width="3"/>`).join('')}
+<rect y="100" width="320" height="60" fill="var(--teal)"/>${[112,126,140].map((y,i)=>`<path d="M${i*20},${y} q20,-6 40,0 t40,0 t40,0 t40,0 t40,0 t40,0 t40,0" fill="none" stroke="var(--surface)" stroke-width="2" opacity=".7"/>`).join('')}
+<path d="M0,160 L0,118 Q80,104 160,122 L200,160Z" fill="var(--ok)" stroke="var(--ink)" stroke-width="3"/>
+<path d="M30,146 L60,126 L130,126 L110,146Z" fill="var(--accent)" stroke="var(--ink)" stroke-width="2"/><rect x="78" y="128" width="22" height="12" fill="var(--rust)" stroke="var(--ink)" stroke-width="2"/><rect x="60" y="134" width="6" height="10" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.5"/><rect x="68" y="134" width="6" height="10" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.5"/>
+${person(44,128,.6)}${person(120,124,.6)}<circle cx="160" cy="146" r="9" fill="none" stroke="var(--ink)" stroke-width="2.5"/><circle cx="184" cy="146" r="9" fill="none" stroke="var(--ink)" stroke-width="2.5"/><path d="M160,146 L170,132 L184,146 M170,132 L178,132" fill="none" stroke="var(--ink)" stroke-width="2"/>`,
+food:()=>`<rect width="320" height="160" fill="var(--surface-2)"/><rect y="84" width="320" height="76" fill="var(--bg-2)" stroke="var(--ink)" stroke-width="3"/><rect y="84" width="320" height="76" fill="url(#hatch)" opacity=".35"/>
+<circle cx="160" cy="112" r="44" fill="var(--ink-2)" stroke="var(--ink)" stroke-width="3"/>${[-30,-15,0,15,30].map(y=>`<line x1="${160-Math.sqrt(1936-y*y)+4}" y1="${112+y}" x2="${160+Math.sqrt(1936-y*y)-4}" y2="${112+y}" stroke="var(--surface)" stroke-width="1.5" opacity=".6"/>`).join('')}
+${[[-26,-8,20],[-2,-14,20],[6,6,20],[-20,14,18]].map(([x,y,r])=>`<g transform="translate(${160+x},${112+y}) rotate(${r})"><rect x="-14" y="-6" width="28" height="12" rx="3" fill="var(--rust)" stroke="var(--ink)" stroke-width="2"/><line x1="-9" y1="-6" x2="-9" y2="6" stroke="var(--accent-soft)" stroke-width="3"/><line x1="4" y1="-6" x2="4" y2="6" stroke="var(--accent-soft)" stroke-width="3"/></g>`).join('')}
+${[[56,100,'var(--teal)'],[84,130,'var(--accent)'],[236,100,'var(--rust)'],[264,130,'var(--ok)']].map(([x,y,c])=>`<circle cx="${x}" cy="${y}" r="14" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/><circle cx="${x}" cy="${y}" r="8" fill="${c}"/>`).join('')}
+<rect x="284" y="36" width="20" height="52" rx="6" fill="var(--ok)" stroke="var(--ink)" stroke-width="3"/><rect x="290" y="26" width="8" height="14" fill="var(--ok)" stroke="var(--ink)" stroke-width="3"/><rect x="288" y="56" width="12" height="16" fill="var(--surface)"/>
+<line x1="20" y1="60" x2="46" y2="96" stroke="var(--ink)" stroke-width="3"/><line x1="30" y1="56" x2="54" y2="92" stroke="var(--ink)" stroke-width="3"/><path d="M100,40 q4,-8 0,-16 M112,40 q4,-8 0,-16 M124,40 q4,-8 0,-16" fill="none" stroke="var(--ink)" stroke-width="2" opacity=".7"/>`,
+bank:()=>`<rect width="320" height="160" fill="var(--surface-2)"/><rect x="104" y="14" width="112" height="46" rx="3" fill="var(--ink)" stroke="var(--ink)" stroke-width="3"/><text x="160" y="47" text-anchor="middle" font-family="Oswald,Impact,sans-serif" font-size="28" fill="var(--rust)" letter-spacing="4">052</text>
+<rect y="100" width="320" height="60" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/><rect y="100" width="320" height="10" fill="var(--teal)" stroke="var(--ink)" stroke-width="3"/>
+<rect x="34" y="112" width="64" height="40" rx="5" fill="var(--teal)" stroke="var(--ink)" stroke-width="3"/><rect x="42" y="124" width="16" height="12" rx="2" fill="var(--accent)" stroke="var(--ink)" stroke-width="1.5"/><line x1="64" y1="142" x2="90" y2="142" stroke="var(--surface)" stroke-width="3"/>
+${[0,1,2].map(i=>`<rect x="${214+i*4}" y="${118-i*5}" width="56" height="34" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/>`).join('')}${[108,116,124].map(y=>`<line x1="230" y1="${y}" x2="${y===124?252:264}" y2="${y}" stroke="var(--ink)" stroke-width="2"/>`).join('')}<rect x="252" y="128" width="12" height="12" fill="var(--rust)"/>
+<g transform="translate(150,130) rotate(-8)"><rect x="-18" y="-12" width="36" height="24" fill="var(--accent-soft)" stroke="var(--ink)" stroke-width="2"/><text x="0" y="5" text-anchor="middle" font-family="Oswald,Impact,sans-serif" font-size="12" fill="var(--ink)">52</text></g>
+${person(26,100,.7)}${person(50,100,.7,'var(--ink-2)')}${person(296,100,.7)}`,
+weather:()=>`<rect width="320" height="160" fill="var(--bg-2)"/>${[[60,34,30],[96,26,36],[134,36,28],[230,30,34],[266,24,30]].map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/>`).join('')}<rect x="30" y="40" width="130" height="26" fill="var(--surface)"/><rect x="200" y="36" width="96" height="20" fill="var(--surface)"/>
+${Array.from({length:14},(_,i)=>`<line x1="${20+i*22}" y1="74" x2="${12+i*22}" y2="100" stroke="var(--teal)" stroke-width="2.5" stroke-linecap="round"/>`).join('')}
+${[[0,120,40],[48,110,50],[104,126,30],[220,112,44],[270,122,50]].map(([x,y,w])=>`<rect x="${x}" y="${y}" width="${w}" height="${160-y}" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="3"/>`).join('')}
+<path d="M120,118 A44,44 0 0 1 208,118Z" fill="var(--rust)" stroke="var(--ink)" stroke-width="3"/>${[142,164,186].map(x=>`<line x1="${x}" y1="${x===164?74:84}" x2="${x}" y2="118" stroke="var(--ink)" stroke-width="2"/>`).join('')}<line x1="164" y1="118" x2="164" y2="150" stroke="var(--ink)" stroke-width="3"/><path d="M164,150 a7,7 0 0 0 14,0" fill="none" stroke="var(--ink)" stroke-width="3"/>
+${person(148,160,.75)}<ellipse cx="90" cy="156" rx="30" ry="4" fill="var(--teal)" opacity=".6"/>`,
+phone:()=>`<rect width="320" height="160" fill="var(--surface-2)"/><rect width="320" height="160" fill="url(#dots)" opacity=".4"/><rect x="108" y="6" width="104" height="170" rx="16" fill="var(--ink)" stroke="var(--ink)" stroke-width="3"/><rect x="116" y="20" width="88" height="140" fill="var(--accent)"/>
+<rect x="122" y="30" width="54" height="22" rx="8" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/><line x1="130" y1="41" x2="166" y2="41" stroke="var(--ink)" stroke-width="2"/>
+<rect x="144" y="60" width="54" height="22" rx="8" fill="var(--ok-soft)" stroke="var(--ink)" stroke-width="2"/><line x1="152" y1="71" x2="190" y2="71" stroke="var(--ink)" stroke-width="2"/>
+<rect x="122" y="90" width="66" height="30" rx="8" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/><line x1="130" y1="101" x2="180" y2="101" stroke="var(--ink)" stroke-width="2"/><line x1="130" y1="110" x2="162" y2="110" stroke="var(--ink)" stroke-width="2"/>
+<rect x="150" y="128" width="48" height="22" rx="8" fill="var(--ok-soft)" stroke="var(--ink)" stroke-width="2"/><circle cx="162" cy="139" r="3" fill="var(--ink)"/><circle cx="174" cy="139" r="3" fill="var(--ink)"/><circle cx="186" cy="139" r="3" fill="var(--ink)"/>
+<circle cx="204" cy="22" r="10" fill="var(--rust)" stroke="var(--ink)" stroke-width="2"/><text x="204" y="26" text-anchor="middle" font-family="Oswald,Impact,sans-serif" font-size="11" fill="#fff">3</text>
+<path d="M40,70 l10,-14 M44,76 l16,-6 M38,64 l-2,-16" stroke="var(--ink)" stroke-width="2"/><path d="M280,90 l10,14 M276,84 l16,6 M282,96 l-2,16" stroke="var(--ink)" stroke-width="2"/>`,
+bus:()=>`<rect width="320" height="160" fill="var(--bg-2)"/><rect y="124" width="320" height="36" fill="var(--surface-2)" stroke="var(--ink)" stroke-width="3"/>
+<rect x="116" y="44" width="190" height="86" rx="12" fill="var(--ok)" stroke="var(--ink)" stroke-width="3"/>${[128,172,216,260].map(x=>`<rect x="${x}" y="54" width="34" height="30" rx="3" fill="var(--accent-soft)" stroke="var(--ink)" stroke-width="2"/>`).join('')}<rect x="116" y="90" width="190" height="8" fill="var(--accent)"/><rect x="258" y="90" width="26" height="40" fill="var(--accent-soft)" stroke="var(--ink)" stroke-width="2"/>
+<circle cx="150" cy="130" r="14" fill="var(--ink)"/><circle cx="150" cy="130" r="6" fill="var(--surface)"/><circle cx="270" cy="130" r="14" fill="var(--ink)"/><circle cx="270" cy="130" r="6" fill="var(--surface)"/>
+<rect x="146" y="108" width="40" height="10" fill="var(--surface)"/><text x="166" y="117" text-anchor="middle" font-family="Oswald,Impact,sans-serif" font-size="10" fill="var(--ink)" letter-spacing="1">5100</text>
+<line x1="48" y1="40" x2="48" y2="124" stroke="var(--ink)" stroke-width="3"/><rect x="28" y="26" width="40" height="30" rx="2" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/><rect x="34" y="32" width="28" height="18" fill="var(--teal)"/>
+<rect x="14" y="104" width="60" height="6" fill="var(--ink)"/><line x1="20" y1="110" x2="20" y2="124" stroke="var(--ink)" stroke-width="3"/><line x1="68" y1="110" x2="68" y2="124" stroke="var(--ink)" stroke-width="3"/>${person(90,124,.8)}`
+};
+function art(id,label){ const s=sceneById[id]||SCENES[0]; const fn=ART[s.id]||ART.store; return `<svg viewBox="0 0 320 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(label||s.ru)}" preserveAspectRatio="xMidYMid slice"><g filter="url(#wobble)">${fn()}</g><rect width="320" height="160" fill="var(--ink)" filter="url(#grain)" opacity=".16"/></svg>`; }
+function hashStr(s){ let h=0; for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return h; }
+// сцена темы: подбираем по ключевым словам, иначе детерминированно по id
+const SCENE_HINTS=[[/음식|먹|맛|식|주문|-ㄹ게요|주세요/,'food'],[/시간|시|분|날짜|요일|언제/,'office'],[/위치|어디|있|없|앞|옆/,'room'],[/날씨|춥|덥|계절/,'weather'],[/가격|얼마|사|돈|원/,'market'],[/가|오|타|버스|지하철|교통/,'subway'],[/전화|문자|연락/,'phone'],[/아프|병|약/,'clinic']];
+function sceneForTopic(t){ for(const [re,id] of SCENE_HINTS){ if(re.test(t.t+' '+t.n)) return sceneById[id]; } return SCENES[hashStr(t.id)%SCENES.length]; }
+
 /* ============ СОСТОЯНИЕ ============ */
 const KEY='korean-b1-progress';
 const today=()=>new Date().toISOString().slice(0,10);
 function fresh(){
-  const s={v:1,updated:0,topics:{},vocab:{},errors:[],days:{},settings:{goal:10}};
+  const s={v:2,updated:0,topics:{},vocab:{},errors:[],days:{},skills:{g:{n:0,c:0},r:{n:0,c:0},w:{n:0,c:0}},scenes:{},settings:{goal:10}};
   T.forEach(t=>{ if(t.k) s.topics[t.id]={s:0.6,n:0,c:0,t:0}; });
   return s;
 }
 let state=fresh();
 try{ const raw=localStorage.getItem(KEY); if(raw){ state=migrate(JSON.parse(raw)); } }catch(e){}
-function migrate(s){ const f=fresh(); return {...f,...s,topics:{...f.topics,...(s.topics||{})},vocab:s.vocab||{},errors:s.errors||[],days:s.days||{},settings:{...f.settings,...(s.settings||{})}}; }
+function migrate(s){ const f=fresh(); return {...f,...s,topics:{...f.topics,...(s.topics||{})},vocab:s.vocab||{},errors:s.errors||[],days:s.days||{},skills:{...f.skills,...(s.skills||{})},scenes:s.scenes||{},settings:{...f.settings,...(s.settings||{})}}; }
 
+/* ============ СЕРВЕР: ВХОД, ПРОГРЕСС, ИИ ============ */
 const API='https://fdrsevvkkzogljgelcrv.supabase.co/functions/v1/tutor';
 const TOKEN_KEY='korean-b1-token';
 let TOKEN=null; try{ TOKEN=localStorage.getItem(TOKEN_KEY); }catch(e){}
@@ -641,9 +818,9 @@ async function api(action,payload){
   if(!r.ok){ const code=j.error||('http_'+r.status); if(code==='unauthorized'&&TOKEN) logout(); const err=new Error(code); err.code=code; err.text=j.text; err.detail=j.detail; throw err; }
   return j;
 }
-// Тот же интерфейс, что был у встроенного ИИ артефакта: sampleFn(prompt,{onText}) и sampleFn.json(prompt)
-const sampleFn=Object.assign(async function(prompt,opts){ opts=opts||{}; const r=await api('ai',{prompt,kind:opts.kind||'text',max_tokens:opts.max_tokens||900}); if(opts.onText) opts.onText({text:r.text,delta:r.text}); return {text:r.text}; },
-  { json: async function(prompt,opts){ opts=opts||{}; const r=await api('ai',{prompt,json:true,kind:opts.kind||'json',max_tokens:opts.max_tokens||1800}); return r.data; } });
+// Экономный режим: короткие промпты, max_tokens по типу запроса, модель Haiku на сервере
+const sampleFn=Object.assign(async function(prompt,opts){ opts=opts||{}; const r=await api('ai',{prompt,kind:opts.kind||'text',max_tokens:opts.max_tokens||700}); if(opts.onText) opts.onText({text:r.text,delta:r.text}); return {text:r.text}; },
+  { json: async function(prompt,opts){ opts=opts||{}; const r=await api('ai',{prompt,json:true,kind:opts.kind||'json',max_tokens:opts.max_tokens||1600}); return r.data; } });
 function save(){
   state.updated=Date.now();
   try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
@@ -651,8 +828,8 @@ function save(){
 }
 async function persistRemote(){
   if(!TOKEN) return;
-  try{ await api('save',{data:state}); setSync('ok','Прогресс сохранён'); }
-  catch(e){ setSync('err','Не удалось сохранить: '+e.code); }
+  try{ await api('save',{data:state}); setSync('ok','Сохранено'); }
+  catch(e){ setSync('err','Не сохранено: '+e.code); }
 }
 async function loadRemote(){
   if(!TOKEN) return;
@@ -661,18 +838,19 @@ async function loadRemote(){
     const r=await api('load');
     if(r.data){ const remote=migrate(r.data); if((remote.updated||0)>(state.updated||0)){ state=remote; try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){} renderAll(); } else if((state.updated||0)>(remote.updated||0)) await persistRemote(); }
     else await persistRemote();
-    setSync('ok','Прогресс сохранён');
+    setSync('ok','Сохранено');
   }catch(e){ if(e.code!=='unauthorized') setSync('err','База недоступна: '+e.code); }
 }
 function gate(on){ document.getElementById('gate').classList.toggle('hidden',!on); document.querySelector('header.top').classList.toggle('hidden',on); document.querySelector('main').classList.toggle('hidden',on); if(on) renderGate(); }
 function renderGate(){
   const st=serverStatus; const configured=st?st.configured:true; const g=document.getElementById('gate');
-  g.innerHTML=`<div class="gate-card"><h1 class="ko">한국어 → B1</h1>
-  <p style="margin:0">${configured?'Введите код доступа.':'Придумайте код доступа, не короче четырёх символов. Он понадобится, чтобы открыть учебник на другом устройстве.'}</p>
+  g.innerHTML=`<div class="gate-card"><div class="panel"><div class="panel-art" style="position:relative">${art('store','Ночной круглосуточный магазин')}<span class="caption"><span class="ko">편의점</span>24 часа</span></div>
+  <h1 class="ko">한국어 → B1</h1><p class="muted" style="margin:4px 0 14px;font-family:var(--display);font-style:italic;font-size:18px">Учебник повседневной Кореи</p>
+  <p style="margin:0 0 12px">${configured?'Введите код доступа.':'Придумайте код доступа, не короче четырёх символов. Он понадобится, чтобы открыть учебник на другом устройстве.'}</p>
   <form id="gate-form"><input id="pin" type="password" autocomplete="${configured?'current-password':'new-password'}" placeholder="Код доступа" aria-label="Код доступа"><button class="btn primary" type="submit">${configured?'Войти':'Создать'}</button></form>
-  <p id="gate-err" class="small" style="margin:0;color:var(--bad)"></p>
-  ${st&&!st.ai?'<p class="notice" style="margin:0">Ключ Anthropic API ещё не добавлен в секреты Supabase: прогресс сохраняется, но упражнения пока не сгенерируются.</p>':''}
-  ${st?'':'<p class="notice" style="margin:0">Сервер не отвечает. Проверьте интернет и обновите страницу.</p>'}</div>`;
+  <p id="gate-err" class="small" style="margin:8px 0 0;color:var(--bad)"></p>
+  ${st&&!st.ai?'<p class="notice" style="margin:12px 0 0">Ключ Anthropic API ещё не добавлен: прогресс сохраняется, но упражнения пока не сгенерируются. Ключ вводится на главной после входа.</p>':''}
+  ${st?'':'<p class="notice" style="margin:12px 0 0">Сервер не отвечает. Проверьте интернет и обновите страницу.</p>'}</div></div>`;
   const form=document.getElementById('gate-form'), err=document.getElementById('gate-err');
   form.onsubmit=async e=>{ e.preventDefault(); const pin=document.getElementById('pin').value; err.textContent=''; form.querySelector('button').disabled=true;
     try{ const r=await api(configured?'login':'setup',{pin}); TOKEN=r.token; try{localStorage.setItem(TOKEN_KEY,TOKEN);}catch(x){} gate(false); show(current); loadRemote(); }
@@ -688,7 +866,7 @@ async function boot(){
 }
 async function loadStats(){
   const el=document.getElementById('ai-stats'); if(!el||!TOKEN) return;
-  try{ const s=await api('stats'); const cost=(s.ai.input_tokens*0.10+s.ai.output_tokens*0.50)/1e6; el.textContent=`В журнале ${s.attempts} ответов. Запросов к ИИ: ${s.ai.calls}, токенов: ${s.ai.input_tokens+s.ai.output_tokens}, примерная стоимость $${cost.toFixed(3)} (модель ${s.ai.model}).`; }catch(e){}
+  try{ const s=await api('stats'); const cost=(s.ai.input_tokens*0.10+s.ai.output_tokens*0.50)/1e6; el.textContent=`В журнале ${s.attempts} ответов. Запросов к ИИ: ${s.ai.calls}, токенов: ${s.ai.input_tokens+s.ai.output_tokens}, примерно $${cost.toFixed(3)} (модель ${s.ai.model}).`; }catch(e){}
 }
 
 /* ============ ВСПОМОГАТЕЛЬНОЕ ============ */
@@ -702,19 +880,39 @@ function nextNew(){ return T.find(t=>!t.k&&tp(t.id).n===0); }
 function weakTopics(n){ return T.filter(t=>(tp(t.id).n>0||t.k)&&tp(t.id).s<0.8).sort((a,b)=>tp(a.id).s-tp(b.id).s||tp(a.id).t-tp(b.id).t).slice(0,n); }
 function streak(){ let d=new Date(), n=0; const k=x=>x.toISOString().slice(0,10); if(!state.days[k(d)]) d.setDate(d.getDate()-1); while(state.days[k(d)]){ n++; d.setDate(d.getDate()-1); } return n; }
 function updateTopic(id,ok){ const p=tp(id); p.n++; if(ok) p.c++; p.s=Math.max(0,Math.min(1, ok? p.s+(1-p.s)*0.25 : p.s-p.s*0.3)); p.t=Date.now(); state.topics[id]=p; state.days[today()]=(state.days[today()]||0)+1; save(); }
-function norm(s){ return String(s||'').toLowerCase().replace(/[\s.,!?~…·'"“”‘’()\[\]-]/g,''); }
+// NFC: хангыль, набранный через IME или вставленный с macOS, может прийти разложенным на чамо
+function norm(s){ return String(s||'').normalize('NFC').toLowerCase().replace(/[\s.,!?~…·'"“”‘’()\[\]-]/g,''); }
 function pickTrainingTopics(){
   const weak=weakTopics(3); const nn=nextNew(); const out=[];
-  if(weak.length&&weak[0].s<0.5) out.push(weak[0]);
+  if(weak.length&&tp(weak[0].id).s<0.5) out.push(weak[0]);
   if(nn) out.push(nn); else if(weak[1]) out.push(weak[1]);
   if(!out.length&&weak.length) out.push(weak[0]);
   if(out.length<2&&weak.length>1) out.push(weak.find(t=>!out.includes(t))||weak[0]);
   if(!out.length) out.push(T[T.length-1]);
   return [...new Set(out)].slice(0,2);
 }
-function difficulty(t){ const s=tp(t.id).s; return s<0.4?'лёгкая: выбор ответа и подстановка окончаний':(s<0.7?'средняя: подстановка и короткий перевод':'высокая: перевод целых предложений и поиск ошибок'); }
-function typesFor(t){ const s=tp(t.id).s; return s<0.4?'mc, fill':(s<0.7?'mc, fill, translate':'fill, translate, fix'); }
 function knownWords(n){ const ids=Object.keys(state.vocab).filter(i=>state.vocab[i].b>=2).map(Number); const base=ids.length?ids:VOCAB.map((_,i)=>i); const pick=[]; const arr=[...base]; while(pick.length<n&&arr.length){ pick.push(arr.splice(Math.floor(Math.random()*arr.length),1)[0]); } return pick.map(i=>VOCAB[i][0]).join(', '); }
+
+/* ============ НАВЫКИ (три голоса, как в Disco Elysium) ============ */
+const TYPES=['mc','fill','fix','order','translate','read','write','dialog'];
+const SKILL_OF={mc:'g',fill:'g',fix:'g',order:'g',read:'r',translate:'w',write:'w',dialog:'w'};
+const SKILLS={g:{nm:'Грамматика',ko:'문법',cls:''},r:{nm:'Чтение',ko:'읽기',cls:'teal'},w:{nm:'Письмо',ko:'쓰기',cls:'ok'}};
+const TYPE_NAME={mc:'Выбор ответа',fill:'Подстановка',fix:'Исправьте ошибку',order:'Соберите предложение',translate:'Перевод на корейский',read:'Чтение',write:'Письмо',dialog:'Диалог'};
+function skillRate(k){ const s=state.skills[k]; return s.n?s.c/s.n:0; }
+function skillLabel(k){ const s=state.skills[k]; if(s.n<5) return 'Пробуем'; const r=s.c/s.n; return r<0.5?'Шатко':(r<0.75?'Уверенно':'Мастерски'); }
+function weakestSkill(){ const score=k=>state.skills[k].n<4?-1:skillRate(k); return ['g','r','w'].sort((a,b)=>score(a)-score(b))[0]; }
+function pickScene(){ return [...SCENES].sort((a,b)=>(state.scenes[a.id]||0)-(state.scenes[b.id]||0)||hashStr(a.id+today())-hashStr(b.id+today()))[0]; }
+function grammarTypes(t){ const s=tp(t.id).s; return s<0.4?['mc','fill']:(s<0.7?['mc','fill','order']:['fill','fix','order']); }
+function writingTypes(t){ const s=tp(t.id).s; return s<0.5?['translate']:['translate','write','dialog']; }
+// План тренировки: 7 заданий на две темы (грамматика ×4, чтение ×1, письмо ×2); слабый навык получает ещё одно задание
+function planTypes(topics){
+  const base=topics.length>1?[['g','r','g','w'],['g','w','g']]:[['g','r','g','w','g','w']];
+  const weak=weakestSkill();
+  if(weak==='r'){ const last=base[base.length-1]; last[last.indexOf('g')]='r'; }
+  if(weak==='w'){ base[0][base[0].indexOf('g')]='w'; }
+  return base.map((arr,i)=>{ const t=topics[i]; const g=grammarTypes(t), w=writingTypes(t); let gi=hashStr(t.id)%g.length, wi=0;
+    return arr.map(k=>k==='g'?g[(gi++)%g.length]:(k==='w'?w[(wi++)%w.length]:'read')); });
+}
 
 /* ============ НАВИГАЦИЯ ============ */
 let current='home', lessonId=null;
@@ -722,38 +920,41 @@ const views=['home','topics','lesson','train','vocab'];
 function show(v){ current=v; views.forEach(x=>document.getElementById('view-'+x).classList.toggle('hidden',x!==v)); document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.tab===v||(v==='lesson'&&b.dataset.tab==='topics')))); window.scrollTo({top:0}); ({home:renderHome,topics:renderTopics,lesson:renderLesson,train:renderTrain,vocab:renderVocab})[v](); }
 document.getElementById('tabs').addEventListener('click',e=>{ const b=e.target.closest('button'); if(b) show(b.dataset.tab); });
 function renderAll(){ show(current); }
+function skillsHtml(){ return `<div class="skills">${['g','r','w'].map(k=>{ const s=state.skills[k]; const pct=Math.round(skillRate(k)*100); return `<div class="skill"><span class="nm">${SKILLS[k].nm} <span class="ko muted" style="letter-spacing:0;text-transform:none">${SKILLS[k].ko}</span></span><span class="bar ${SKILLS[k].cls}"><i style="width:${pct}%"></i></span><span class="lv">${skillLabel(k)}${s.n?` · ${s.c}/${s.n}`:''}</span></div>`; }).join('')}</div>`; }
 
 /* ============ ГЛАВНАЯ ============ */
 function renderHome(){
-  const m=mastered(), total=T.length, pct=Math.round(m/total*100), lv=levelReached(), nn=nextNew(), weak=weakTopics(3), done=state.days[today()]||0, goal=state.settings.goal;
+  const m=mastered(), total=T.length, pct=Math.round(m/total*100), lv=levelReached(), nn=nextNew(), weak=weakTopics(3), done=state.days[today()]||0, goal=state.settings.goal, sc=pickScene();
   const errs=state.errors.slice(-5).reverse();
   document.getElementById('view-home').innerHTML=`
+  <div class="panel">
+    <div class="panel-art" style="position:relative">${art(sc.id)}<span class="caption"><span class="ko">${esc(sc.ko)}</span>Сцена дня</span></div>
+    <div class="eyebrow">${esc(sc.ru)}</div>
+    <h2 style="font-size:28px;margin-top:4px">Тренировка под ваш уровень</h2>
+    <p class="muted" style="margin:6px 0 14px;max-width:60ch">Семь заданий: грамматика, чтение короткой истории и письмо. Все предложения про бытовую жизнь в Корее, сегодня — ${esc(sc.ru.toLowerCase())}. Слабые темы возвращаются чаще, новые добавляются по одной.</p>
+    <div class="row"><button class="btn primary" id="go-train">Начать тренировку</button>${nn?`<button class="btn" data-lesson="${nn.id}">Новая тема: <span class="ko">${esc(nn.t)}</span></button>`:''}</div>
+  </div>
   <div>
-    <div class="eyebrow">Путь до B1</div>
-    <div class="row" style="margin-top:6px"><div class="grow"><div class="bar"><i style="width:${pct}%"></i></div></div><b style="font-variant-numeric:tabular-nums">${pct}%</b></div>
-    <p class="muted small" style="margin:6px 0 0">${m} из ${total} грамматических тем на уровне «освоена». Уровень по программе: <b>${esc(lv)}</b>.</p>
+    <div class="eyebrow">Путь до B1 · уровень по программе <b style="color:var(--fg)">${esc(lv)}</b></div>
+    <div class="row" style="margin-top:8px"><div class="grow"><div class="bar"><i style="width:${pct}%"></i></div></div><b style="font-family:var(--display);font-size:22px">${pct}%</b></div>
+    <p class="muted small" style="margin:6px 0 0">${m} из ${total} грамматических тем освоено.</p>
   </div>
   <div class="stats">
-    <div class="stat"><b>${done}<span style="font-size:15px;font-weight:400;color:var(--muted)"> / ${goal}</span></b><span>упражнений сегодня</span></div>
+    <div class="stat"><b>${done}<span style="font-size:16px;font-weight:400;color:var(--muted);font-family:var(--body)"> / ${goal}</span></b><span>заданий сегодня</span></div>
     <div class="stat"><b>${streak()}</b><span>дней подряд</span></div>
-    <div class="stat"><b>${Object.values(state.vocab).filter(v=>v.b>=3).length}</b><span>слов в долгой памяти</span></div>
+    <div class="stat"><b>${Object.values(state.vocab).filter(v=>v.b>=3).length}</b><span>слов в памяти</span></div>
   </div>
-  ${aiReady?'':`<div class="card" style="border-color:var(--warn)">
+  <div class="panel flat"><div class="eyebrow ink" style="margin-bottom:10px">Навыки</div>${skillsHtml()}<p class="muted small" style="margin:10px 0 0">Самый слабый навык получает дополнительное задание в каждой тренировке.</p></div>
+  ${aiReady?'':`<div class="panel" style="border-color:var(--rust)">
     <div class="eyebrow">Подключить ИИ</div>
-    <h2 style="font-size:19px;margin-top:6px">Нужен ключ Anthropic API</h2>
-    <p class="muted" style="margin:6px 0 12px">Создайте ключ на <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> и вставьте сюда один раз. Он сохранится в вашей базе Supabase и будет виден только серверной функции. Упражнения генерирует Haiku 5.5, самая дешёвая модель.</p>
+    <h2 style="font-size:22px;margin-top:6px">Нужен ключ Anthropic API</h2>
+    <p class="muted" style="margin:6px 0 12px">Создайте ключ на <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> и вставьте сюда один раз. Он хранится только в вашей базе Supabase и виден только серверной функции. Задания генерирует Haiku 5.5, самая экономичная модель.</p>
     <form id="key-form" class="answer" style="margin:0"><input id="key-inp" type="password" autocomplete="off" placeholder="sk-ant-…" aria-label="Ключ Anthropic API" style="font-family:var(--body)"><button class="btn primary" type="submit">Проверить и сохранить</button></form>
     <p id="key-err" class="small" style="margin:8px 0 0;color:var(--bad)"></p>
   </div>`}
-  <div class="card">
-    <div class="eyebrow">Продолжить</div>
-    <h2 style="font-size:19px;margin-top:6px">Тренировка под ваш уровень</h2>
-    <p class="muted" style="margin:6px 0 14px">Смесь: слабая тема на повторение и следующая новая. Шесть упражнений, около двух минут.</p>
-    <div class="row"><button class="btn primary" id="go-train">Начать тренировку</button>${nn?`<button class="btn" data-lesson="${nn.id}">Следующая тема: <span class="ko">${esc(nn.t)}</span></button>`:''}</div>
-  </div>
   ${weak.length?`<div><div class="eyebrow">Слабые места</div><div style="margin-top:6px">${weak.map(t=>`<button class="topic" data-lesson="${t.id}"><span class="t">${esc(t.t)}</span><span class="chip ${status(t)[1]}">${status(t)[0]}</span><span class="n">${esc(t.n)}</span><span class="bar warn"><i style="width:${Math.round(tp(t.id).s*100)}%"></i></span></button>`).join('')}</div></div>`:''}
   ${errs.length?`<div><div class="eyebrow">Последние ошибки</div><ul class="errors plain" style="list-style:none;padding:0;margin-top:6px">${errs.map(e=>`<li><span class="ko">${esc(e.q)}</span><br><span class="muted">Правильно: </span><span class="ko">${esc(e.a)}</span> <span class="muted small">· ${esc(byId[e.id]?.t||'')}</span></li>`).join('')}</ul></div>`:''}
-  <p class="muted small">Программа составлена по Integrated Korean Beginning 1–2 и «Korean Language for Beginners» Де Бенедиттиса; стартовая точка выставлена по вашему конспекту занятий (последний урок 16 сентября 2026: 을/를, прошедшее время, -고 싶다).</p>
+  <p class="muted small">Программа по Integrated Korean Beginning 1–2 и «Korean Language for Beginners» Де Бенедиттиса; стартовая точка по вашему конспекту (последний урок 16 сентября 2026: 을/를, прошедшее время, -고 싶다). Сюжеты заданий: ${SCENES.map(s=>s.ko).join(', ')}.</p>
   <div id="ai-stats" class="muted small"></div>
   <div><button class="btn ghost" id="logout">Выйти на этом устройстве</button></div>`;
   bindLessonButtons('view-home');
@@ -767,10 +968,10 @@ function bindLessonButtons(viewId){ document.querySelectorAll('#'+viewId+' [data
 
 /* ============ ТЕМЫ ============ */
 function renderTopics(){
-  document.getElementById('view-topics').innerHTML=LEVELS.map(L=>{ const ts=T.filter(t=>t.lv===L.id); const m=ts.filter(t=>tp(t.id).s>=0.8).length; return `
-  <div class="level"><div class="level-head"><h2>${esc(L.name)}</h2><span class="chip ${m===ts.length?'ok':''}">${m} / ${ts.length}</span></div>
+  document.getElementById('view-topics').innerHTML=LEVELS.map((L,i)=>{ const ts=T.filter(t=>t.lv===L.id); const m=ts.filter(t=>tp(t.id).s>=0.8).length; return `
+  <div class="level"><div class="level-head"><h2><span class="muted" style="font-style:italic;margin-right:8px">Глава ${i+1}.</span>${esc(L.name)}</h2><span class="chip ${m===ts.length?'ok':''}">${m} / ${ts.length}</span></div>
   <p class="muted small" style="margin:0 0 8px">${esc(L.desc)}</p>
-  ${ts.map(t=>{ const [lab,cls]=status(t); const p=tp(t.id); return `<button class="topic" data-lesson="${t.id}"><span class="t">${esc(t.t)}</span><span class="chip ${cls}">${lab}</span><span class="n">${esc(t.n)}</span><span class="bar ${p.s>=0.8?'ok':(p.s<0.5&&p.n?'warn':'')}"><i style="width:${Math.round(p.s*100)}%"></i></span></button>`; }).join('')}
+  ${ts.map(t=>{ const [lab,cls]=status(t); const p=tp(t.id); return `<button class="topic" data-lesson="${t.id}"><span class="t">${esc(t.t)}</span><span class="chip ${cls}">${lab}</span><span class="n">${esc(t.n)} · <span class="ko">${esc(sceneForTopic(t).ko)}</span></span><span class="bar ${p.s>=0.8?'ok':(p.s<0.5&&p.n?'warn':'')}"><i style="width:${Math.round(p.s*100)}%"></i></span></button>`; }).join('')}
   </div>`; }).join('');
   bindLessonButtons('view-topics');
 }
@@ -779,22 +980,26 @@ function renderTopics(){
 let explainCtl=null;
 function renderLesson(){
   const t=byId[lessonId]; if(!t){ show('topics'); return; }
-  const [lab,cls]=status(t); const p=tp(t.id);
+  const [lab,cls]=status(t); const p=tp(t.id); const sc=sceneForTopic(t);
   document.getElementById('view-lesson').innerHTML=`
   <div class="lesson">
     <button class="btn ghost" id="back">← Все темы</button>
-    <div class="row" style="margin-top:10px"><span class="chip acc">${esc(t.lv)}</span><span class="chip ${cls}">${lab}</span><span class="muted small">${esc(t.src)}</span></div>
-    <h2 style="margin-top:10px">${esc(t.t)}</h2>
-    <div class="sub">${esc(t.n)}</div>
-    ${p.n?`<div class="row small muted" style="margin-top:8px"><span>Освоение ${Math.round(p.s*100)}%</span><span>·</span><span>Ответов: ${p.c} верных из ${p.n}</span></div>`:''}
+    <div class="panel" style="margin-top:10px">
+      <div class="panel-art short" style="position:relative">${art(sc.id)}<span class="caption"><span class="ko">${esc(sc.ko)}</span>${esc(sc.ru)}</span></div>
+      <div class="row"><span class="chip acc">${esc(t.lv)}</span><span class="chip ${cls}">${lab}</span><span class="muted small">${esc(t.src)}</span></div>
+      <h2 style="margin-top:10px">${esc(t.t)}</h2>
+      <div class="sub">${esc(t.n)}</div>
+      ${p.n?`<div class="row small muted" style="margin-top:8px"><span>Освоение ${Math.round(p.s*100)}%</span><span>·</span><span>Ответов: ${p.c} верных из ${p.n}</span></div>`:''}
+    </div>
   </div>
-  <div class="card" style="display:grid;gap:16px">
+  <div class="panel flat" style="display:grid;gap:16px">
     <p style="margin:0">${esc(t.ex)}</p>
     <div class="formula">${esc(t.f)}</div>
     <ul class="examples">${t.e.map(([k,r])=>`<li><span class="k">${esc(k)}</span><span class="r">${esc(r)}</span></li>`).join('')}</ul>
   </div>
   <div class="row">
     <button class="btn primary" id="train-topic">Упражнения по теме</button>
+    <button class="btn" id="story" ${aiReady?'':'disabled title="Ключ Anthropic API не добавлен"'}>История: <span class="ko">${esc(sc.ko)}</span></button>
     <button class="btn" id="explain" ${aiReady?'':'disabled title="Ключ Anthropic API не добавлен"'}>Объяснить иначе</button>
     ${(!p.n&&!t.k)?`<button class="btn ghost" id="mark-known">Уже знаю эту тему</button>`:''}
   </div>
@@ -802,94 +1007,155 @@ function renderLesson(){
   document.getElementById('back').onclick=()=>show('topics');
   document.getElementById('train-topic').onclick=()=>startSession([t]);
   const mk=document.getElementById('mark-known'); if(mk) mk.onclick=()=>{ state.topics[t.id]={s:0.6,n:0,c:0,t:Date.now()}; save(); renderLesson(); };
-  document.getElementById('explain').onclick=()=>explainTopic(t);
+  document.getElementById('explain').onclick=()=>aiText(`Объясни очень просто русскоязычному ученику уровня ${t.lv} грамматику «${t.t}» (${t.n}): 1) смысл одним предложением; 2) образование по шагам; 3) четыре новых бытовых примера из жизни в Корее (сцена: ${sc.ko}) с переводом, не повторяя: ${t.e.map(e=>e[0]).join(' / ')}; 4) типичная ошибка русскоязычных. До 170 слов, без markdown.`,'explain-box',['explain','story'],600);
+  document.getElementById('story').onclick=()=>aiText(`Напиши короткую бытовую историю (5–6 предложений, 해요체, уровень ${t.lv}) о жизни иностранца в Корее. Сцена: ${sc.ko} — ${sc.d}. Используй грамматику «${t.t}» не меньше трёх раз и в основном эти слова: ${knownWords(16)}. После истории дай перевод на русский. Без пояснений и заголовков.`,'explain-box',['explain','story'],650);
 }
-async function explainTopic(t){
-  const box=document.getElementById('explain-box'); const btn=document.getElementById('explain');
-  if(!aiReady){ box.textContent='Ключ Anthropic API не добавлен в секреты Supabase.'; return; }
-  if(explainCtl) explainCtl.abort(); explainCtl=new AbortController(); btn.disabled=true; box.textContent='Думаю…';
-  const prompt=`Ты преподаватель корейского для русскоязычного взрослого ученика уровня ${t.lv}. Объясни очень просто и понятно грамматику «${t.t}» (${t.n}). Структура: 1) смысл в одном предложении; 2) как образуется, по шагам; 3) четыре новых примера с переводом на русский (не используй эти: ${t.e.map(e=>e[0]).join(' / ')}); 4) типичная ошибка русскоязычных и как её избежать. Пиши по-русски, корейские примеры на хангыле. До 180 слов, без markdown-заголовков.`;
-  try{ await sampleFn(prompt,{modelTier:'quick',signal:explainCtl.signal,onText:({text})=>{ box.textContent=text; }}); }
-  catch(e){ if(e.code==='cancelled') return; box.textContent=(e.text||'')+'\n'+aiError(e); }
-  finally{ btn.disabled=false; }
+async function aiText(prompt,boxId,btnIds,maxTokens){
+  const box=document.getElementById(boxId); const btns=btnIds.map(id=>document.getElementById(id)).filter(Boolean);
+  if(!aiReady){ box.textContent='Ключ Anthropic API не добавлен.'; return; }
+  btns.forEach(b=>b.disabled=true); box.textContent='Думаю…';
+  try{ await sampleFn(prompt,{max_tokens:maxTokens,kind:'text',onText:({text})=>{ box.textContent=text; }}); }
+  catch(e){ box.textContent=(e.text||'')+'\n'+aiError(e); }
+  finally{ btns.forEach(b=>b.disabled=false); }
 }
-function aiError(e){ const c=e&&e.code; const m={no_api_key:'Ключ Anthropic API не добавлен в секреты Supabase (переменная ANTHROPIC_API_KEY).',bad_api_key:'Ключ Anthropic API отклонён: проверьте его в секретах Supabase.',rate_limited:'Слишком много запросов, подождите минуту.',invalid_json:'ИИ ответил не по формату, попробуйте ещё раз.',refusal:'Модель отказалась отвечать на этот запрос.',api_error:'Ошибка Anthropic API'+(e.detail?': '+e.detail:'')+'.',unauthorized:'Сессия истекла, войдите снова.',bad_response:'Сервер вернул неожиданный ответ.'}; return m[c]||('Ошибка ИИ: '+(c||'неизвестная')+'.'); }
+function aiError(e){ const c=e&&e.code; const m={no_api_key:'Ключ Anthropic API не добавлен. Введите его на главной.',bad_api_key:'Ключ Anthropic API отклонён: введите другой на главной.',rate_limited:'Слишком много запросов, подождите минуту.',invalid_json:'ИИ ответил не по формату, попробуйте ещё раз.',refusal:'Модель отказалась отвечать на этот запрос.',api_error:'Ошибка Anthropic API'+(e.detail?': '+e.detail:'')+'.',unauthorized:'Сессия истекла, войдите снова.',bad_response:'Сервер вернул неожиданный ответ.'}; return m[c]||('Ошибка ИИ: '+(c||'неизвестная')+'.'); }
 
 /* ============ ТРЕНИРОВКА ============ */
-let session=null; // {topics, items, idx, results, loading, error}
-function startSession(topics){ session={topics,items:[],idx:0,results:[],loading:true,error:null}; show('train'); generate(); }
+let session=null; // {topics, scene, items, idx, results, loading, error}
+function startSession(topics){ const scene=pickScene(); state.scenes[scene.id]=Date.now(); save(); session={topics,scene,items:[],idx:0,results:[],loading:true,error:null}; show('train'); generate(); }
+function validItem(x){
+  if(!x||!TYPES.includes(x.type)||!x.a) return false;
+  if(['mc','read'].includes(x.type)&&!(Array.isArray(x.options)&&x.options.length>=2)) return false;
+  if(['read','dialog'].includes(x.type)&&!x.text) return false;
+  if(!x.q&&x.type!=='dialog') return false;
+  if(x.type==='order'&&String(x.a).trim().split(/\s+/).length<3) x.type='translate';
+  return true;
+}
+// Экономия и надёжность: по 2–3 задания на запрос (ответ не упирается в лимит токенов), обрезанный JSON спасаем по целым объектам
+function chunk(arr,n){ const o=[]; for(let i=0;i<arr.length;i+=n) o.push(arr.slice(i,i+n)); return o; }
+function salvage(text){ const out=[]; let i=String(text||'').indexOf('{'); const t=String(text||''); while(i>=0&&i<t.length){ let depth=0,inStr=false,escp=false,j=i; for(;j<t.length;j++){ const c=t[j]; if(inStr){ if(escp) escp=false; else if(c==='\\') escp=true; else if(c==='"') inStr=false; continue; } if(c==='"') inStr=true; else if(c==='{') depth++; else if(c==='}'){ depth--; if(depth===0){ try{ out.push(JSON.parse(t.slice(i,j+1))); }catch(x){} break; } } } if(j>=t.length) break; i=t.indexOf('{',j+1); } return out; }
+async function genChunk(t,types,scene){
+  try{ const arr=await sampleFn.json(buildPrompt(t,types,scene),{kind:'exercises',max_tokens:900}); return Array.isArray(arr)?arr:salvage(JSON.stringify(arr)); }
+  catch(e){ if(e.code==='invalid_json'&&e.text){ const s=salvage(e.text); if(s.length) return s; } throw e; }
+}
 async function generate(){
   if(!aiReady){ session.loading=false; session.error='noai'; renderTrain(); return; }
-  const per=Math.ceil(6/session.topics.length);
+  const plan=planTypes(session.topics);
+  const jobs=[]; session.topics.forEach((t,i)=>chunk(plan[i],3).forEach(c=>jobs.push({t,types:c})));
   try{
-    const batches=await Promise.all(session.topics.map(t=>sampleFn.json(buildPrompt(t,per),{modelTier:'quick',cache:false}).then(arr=>(Array.isArray(arr)?arr:[]).map(x=>({...x,topic:t.id})))));
+    const res=await Promise.all(jobs.map(j=>genChunk(j.t,j.types,session.scene).then(arr=>arr.filter(validItem).map(x=>({...x,topic:j.t.id})))));
+    const batches=session.topics.map(t=>res.filter((_,k)=>jobs[k].t===t).flat());
     let items=[]; const max=Math.max(...batches.map(b=>b.length)); for(let i=0;i<max;i++) batches.forEach(b=>{ if(b[i]) items.push(b[i]); });
-    items=items.filter(x=>x&&x.q&&x.a&&['mc','fill','translate','fix'].includes(x.type)).slice(0,6);
     if(!items.length) throw {code:'invalid_json'};
-    session.items=items; session.loading=false;
+    session.items=items.slice(0,8); session.loading=false;
   }catch(e){ session.loading=false; session.error=aiError(e); }
   renderTrain();
 }
-function buildPrompt(t,n){
-  return `Ты преподаватель корейского для русскоязычного ученика (уровень ${t.lv}). Составь ${n} упражнений по теме «${t.t}» (${t.n}).
-Правило: ${t.f}
-Примеры из урока: ${t.e.map(e=>e[0]+' — '+e[1]).join('; ')}
-Знакомые ученику слова, используй в основном их: ${knownWords(28)}.
-Сложность: ${difficulty(t)}. Разрешённые типы: ${typesFor(t)}. Чередуй типы.
-Ответь только JSON-массивом объектов вида {"type":"mc"|"fill"|"translate"|"fix","q":"...","options":["...","...","...","..."],"a":"...","alt":["..."],"why":"..."}.
-Правила: mc — "q" это корейское предложение с пропуском ___ и переводом в скобках по-русски, 4 варианта в "options", "a" в точности равно одному из них; fill — "q" корейское предложение с ___ и русским переводом в скобках, "a" пропущенное слово или окончание; translate — "q" русское предложение, "a" его перевод на корейский; fix — "q" корейское предложение с одной ошибкой именно по этой теме, "a" исправленное предложение. "alt" — другие допустимые верные ответы (может быть пустым). "why" — одно короткое объяснение по-русски, почему так. Вежливый стиль 해요체. Никакого текста вне JSON.`;
+const SPEC={
+ mc:'mc: "q" корейское предложение с пропуском ___ и русским переводом в скобках, "options" 4 варианта, "a" равно одному из них',
+ fill:'fill: "q" корейское предложение с ___ и русским переводом в скобках, "a" пропущенное слово или окончание',
+ fix:'fix: "q" корейское предложение с одной ошибкой по теме, "a" исправленное предложение',
+ order:'order: "a" правильное корейское предложение из 4–7 слов по теме, "q" его русский перевод',
+ translate:'translate: "q" русское предложение, "a" перевод на корейский',
+ read:'read: "text" связный корейский текст из 3–5 предложений про сцену, грамматика темы встречается не меньше двух раз; "q" вопрос по содержанию на русском, "options" 4 варианта на русском, "a" верный',
+ write:'write: "q" задание по-русски: ситуация из сцены и просьба написать 2–3 предложения по-корейски с этой грамматикой, "a" образец ответа',
+ dialog:'dialog: "text" диалог из 3–4 реплик (가:/나:) про сцену, последняя реплика заменена на ___, "q" подсказка по-русски, что сказать, "a" образец реплики'};
+function buildPrompt(t,types,sc){
+  const used=[...new Set(types)];
+  return `Преподаватель корейского для русскоязычного взрослого, живущего в Корее (уровень ${t.lv}). Тема: «${t.t}» (${t.n}). Правило: ${t.f}. Примеры: ${t.e.slice(0,3).map(e=>e[0]).join('; ')}.
+Сцена: ${sc.ko} — ${sc.d}. Все предложения и тексты бытовые, про реальную жизнь в Корее, с этими реалиями.
+Знакомые слова, используй в основном их: ${knownWords(24)}.
+Составь ровно ${types.length} заданий, типы строго по порядку: ${types.join(', ')}.
+Только JSON-массив объектов {"type","q","text","options","a","alt","why"}. ${used.map(k=>SPEC[k]).join('. ')}. "alt" — другие верные ответы (можно []), "why" — объяснение по-русски до 12 слов. Коротко: "text" до 4 предложений, без переносов строк вне "text". Стиль 해요체. Перед ответом проверь каждое задание: ответ грамматически верен (받침!), перевод точно соответствует предложению. Никакого текста вне JSON.`;
 }
+// Ввод хангыля: IME собирает слог из чамо; Enter во время сборки не должен отправлять ответ
+function wireInput(el,onSubmit){
+  let composing=false;
+  el.addEventListener('compositionstart',()=>{ composing=true; });
+  el.addEventListener('compositionend',()=>{ composing=false; });
+  el.addEventListener('keydown',e=>{
+    if(e.key!=='Enter') return;
+    if(e.isComposing||e.keyCode===229||composing) return;
+    if(el.tagName==='TEXTAREA'&&!(e.metaKey||e.ctrlKey)) return;
+    e.preventDefault(); setTimeout(()=>onSubmit(el.value.trim()),0);
+  });
+}
+let order=null; // {tokens, used[], built[]}
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function renderTrain(){
   const v=document.getElementById('view-train');
-  if(!session){ v.innerHTML=`<div class="card"><div class="eyebrow">Тренировка</div><h2 style="font-size:19px;margin-top:6px">Упражнения подбираются под ваш прогресс</h2><p class="muted" style="margin:6px 0 14px">Слабые темы возвращаются чаще, новые добавляются по одной. Проверка и подсказки на русском.</p><div class="row"><button class="btn primary" id="go">Начать</button><button class="btn" id="go-weak">Только повторение</button></div>${aiReady?'':'<p class="notice" style="margin-top:14px">Ключ Anthropic API ещё не добавлен в секреты Supabase, поэтому упражнения пока не сгенерируются. Прогресс и словарь работают.</p>'}</div>`; document.getElementById('go').onclick=()=>startSession(pickTrainingTopics()); document.getElementById('go-weak').onclick=()=>{ const w=weakTopics(2); startSession(w.length?w:pickTrainingTopics()); }; return; }
-  if(session.loading){ v.innerHTML=`<div class="card"><div class="eyebrow">Темы: ${session.topics.map(t=>'<span class="ko">'+esc(t.t)+'</span>').join(' · ')}</div><div class="loader" style="margin-top:14px"><i></i><span>Составляю упражнения под ваш уровень…</span></div></div>`; return; }
-  if(session.error){ v.innerHTML=`<div class="card"><div class="eyebrow">Тренировка</div><p class="notice" style="margin-top:10px">${session.error==='noai'?'Ключ Anthropic API не добавлен в секреты Supabase (ANTHROPIC_API_KEY), поэтому упражнения не генерируются.':esc(session.error)}</p><div class="row" style="margin-top:14px"><button class="btn primary" id="retry">Попробовать снова</button><button class="btn" id="cancel">Назад</button></div></div>`; document.getElementById('retry').onclick=async()=>{ await boot(); startSession(session.topics); }; document.getElementById('cancel').onclick=()=>{ session=null; show('home'); }; return; }
+  if(!session){ const sc=pickScene(); v.innerHTML=`<div class="panel"><div class="panel-art short" style="position:relative">${art(sc.id)}<span class="caption"><span class="ko">${esc(sc.ko)}</span>${esc(sc.ru)}</span></div><div class="eyebrow">Тренировка</div><h2 style="font-size:26px;margin-top:6px">Задания подбираются под ваш прогресс</h2><p class="muted" style="margin:6px 0 14px;max-width:60ch">Грамматика, чтение и письмо в одной серии. Слабые темы возвращаются чаще, новые добавляются по одной. Проверка и подсказки на русском.</p><div class="row"><button class="btn primary" id="go">Начать</button><button class="btn" id="go-weak">Только повторение</button></div>${aiReady?'':'<p class="notice" style="margin-top:14px">Ключ Anthropic API ещё не добавлен, поэтому задания пока не сгенерируются. Введите ключ на главной.</p>'}</div>`; document.getElementById('go').onclick=()=>startSession(pickTrainingTopics()); document.getElementById('go-weak').onclick=()=>{ const w=weakTopics(2); startSession(w.length?w:pickTrainingTopics()); }; return; }
+  if(session.loading){ v.innerHTML=`<div class="panel"><div class="panel-art short" style="position:relative">${art(session.scene.id)}<span class="caption"><span class="ko">${esc(session.scene.ko)}</span>${esc(session.scene.ru)}</span></div><div class="eyebrow">Темы: ${session.topics.map(t=>'<span class="ko">'+esc(t.t)+'</span>').join(' · ')}</div><div class="loader" style="margin-top:14px"><i></i><span>Пишу сцену и задания под ваш уровень…</span></div></div>`; return; }
+  if(session.error){ v.innerHTML=`<div class="panel"><div class="eyebrow">Тренировка</div><p class="notice" style="margin-top:10px">${session.error==='noai'?'Ключ Anthropic API не добавлен, поэтому задания не генерируются. Введите ключ на главной.':esc(session.error)}</p><div class="row" style="margin-top:14px"><button class="btn primary" id="retry">Попробовать снова</button><button class="btn" id="cancel">Назад</button></div></div>`; document.getElementById('retry').onclick=async()=>{ await boot(); startSession(session.topics); }; document.getElementById('cancel').onclick=()=>{ session=null; show('home'); }; return; }
   if(session.idx>=session.items.length){ renderSummary(); return; }
-  const it=session.items[session.idx], t=byId[it.topic]||session.topics[0];
-  const typeName={mc:'Выбор ответа',fill:'Подстановка',translate:'Перевод на корейский',fix:'Исправьте ошибку'}[it.type];
-  v.innerHTML=`<div class="card">
-    <div class="ex-head"><div class="row"><span class="chip acc">${esc(typeName)}</span><span class="muted small ko">${esc(t.t)}</span></div><div class="progress-dots">${session.items.map((_,i)=>`<i class="${i<session.idx?(session.results[i]?'ok':'bad'):(i===session.idx?'cur':'')}"></i>`).join('')}</div></div>
-    <div class="ex-q ${it.type==='translate'?'':'ko'}">${esc(it.q)}</div>
-    ${it.type==='mc'?`<div class="options">${(it.options||[]).map((o,i)=>`<button class="opt" data-i="${i}">${esc(o)}</button>`).join('')}</div>`:`<form class="answer" id="ans"><input id="inp" autocomplete="off" lang="ko" placeholder="${it.type==='translate'?'Напишите по-корейски':'Ваш ответ'}" aria-label="Ответ"><button class="btn primary" type="submit">Проверить</button></form>`}
+  const it=session.items[session.idx], t=byId[it.topic]||session.topics[0], sk=SKILL_OF[it.type], sc=session.scene;
+  order=null;
+  let body='';
+  if(it.type==='read'||it.type==='dialog') body+=`<div class="reading ${it.type}">${esc(it.text)}</div><div class="task">${esc(it.q||'Допишите последнюю реплику.')}</div>`;
+  else body+=`${it.text?`<div class="task muted small">${esc(it.text)}</div>`:''}<div class="bubble ${['mc','fill','fix'].includes(it.type)?'ko':''}">${esc(it.q)}</div>`;
+  if(it.type==='mc'||it.type==='read') body+=`<div class="options">${(it.options||[]).map((o,i)=>`<button class="opt ${it.type==='read'?'':'ko'}" data-i="${i}">${esc(o)}</button>`).join('')}</div>`;
+  else if(it.type==='order'){ const toks=String(it.a).trim().split(/\s+/); let sh=shuffle([...toks]); if(sh.join(' ')===toks.join(' ')) sh=sh.reverse(); order={tokens:sh,used:sh.map(()=>false),built:[]}; body+=`<div class="built" id="built"></div><div class="tokens" id="tokens">${sh.map((w,i)=>`<button class="tok" data-i="${i}">${esc(w)}</button>`).join('')}</div><div class="row" style="margin-top:14px"><button class="btn primary" id="check-order">Проверить</button><button class="btn" id="reset-order">Сброс</button></div>`; }
+  else if(it.type==='write'||it.type==='dialog') body+=`<div class="answer"><textarea id="inp" lang="ko" placeholder="Напишите по-корейски (Ctrl+Enter — проверить)" aria-label="Ответ"></textarea><button class="btn primary" id="check">Проверить</button></div>`;
+  else body+=`<div class="answer"><input id="inp" autocomplete="off" lang="ko" placeholder="${it.type==='translate'?'Напишите по-корейски':'Ваш ответ'}" aria-label="Ответ"><button class="btn primary" id="check">Проверить</button></div>`;
+  v.innerHTML=`<div class="panel">
+    <div class="panel-art short" style="position:relative">${art(sc.id)}<span class="caption"><span class="ko">${esc(sc.ko)}</span>${esc(sc.ru)}</span></div>
+    <div class="ex-head"><div class="row" style="gap:8px"><span class="chip ${SKILLS[sk].cls||'acc'}">${SKILLS[sk].nm}${TYPE_NAME[it.type]===SKILLS[sk].nm?'':' · '+esc(TYPE_NAME[it.type])}</span><span class="muted small ko">${esc(t.t)}</span></div><div class="progress-dots">${session.items.map((_,i)=>`<i class="${i<session.idx?(session.results[i]?'ok':'bad'):(i===session.idx?'cur':'')}"></i>`).join('')}</div></div>
+    ${body}
     <div id="fb"></div>
-    <div class="row" style="margin-top:14px;justify-content:space-between"><button class="btn ghost" id="skip">Не знаю, показать ответ</button><button class="btn ghost" id="quit">Завершить</button></div>
+    <div class="row" style="margin-top:16px;justify-content:space-between"><button class="btn ghost" id="skip">Не знаю, показать ответ</button><button class="btn ghost" id="quit">Завершить</button></div>
   </div>`;
   document.querySelectorAll('#view-train .opt').forEach(b=>b.onclick=()=>checkAnswer(it.options[+b.dataset.i]));
-  const f=document.getElementById('ans'); if(f){ f.onsubmit=e=>{ e.preventDefault(); const val=document.getElementById('inp').value.trim(); if(val) checkAnswer(val); }; document.getElementById('inp').focus(); }
-  document.getElementById('skip').onclick=()=>finishItem(false,'Правильный ответ показан. Тема останется в повторении.',it);
+  const inp=document.getElementById('inp'); if(inp){ const submit=val=>{ if(val) checkAnswer(val); }; wireInput(inp,submit); document.getElementById('check').onclick=()=>submit(inp.value.trim()); inp.focus(); }
+  if(order){ const built=document.getElementById('built'); const draw=()=>{ built.innerHTML=order.built.map((i,n)=>`<button class="tok" data-n="${n}">${esc(order.tokens[i])}</button>`).join(''); built.querySelectorAll('.tok').forEach(b=>b.onclick=()=>{ const i=order.built.splice(+b.dataset.n,1)[0]; order.used[i]=false; draw(); }); document.querySelectorAll('#tokens .tok').forEach(b=>b.disabled=order.used[+b.dataset.i]); };
+    document.querySelectorAll('#tokens .tok').forEach(b=>b.onclick=()=>{ const i=+b.dataset.i; if(order.used[i]) return; order.used[i]=true; order.built.push(i); draw(); });
+    document.getElementById('reset-order').onclick=()=>{ order.used=order.used.map(()=>false); order.built=[]; draw(); };
+    document.getElementById('check-order').onclick=()=>{ if(order.built.length) checkAnswer(order.built.map(i=>order.tokens[i]).join(' ')); }; }
+  document.getElementById('skip').onclick=()=>finishItem(false,'Ответ показан. Тема останется в повторении.',it);
   document.getElementById('quit').onclick=()=>{ session.items=session.items.slice(0,session.idx); renderTrain(); };
 }
 async function checkAnswer(val){
   const it=session.items[session.idx];
   const accepted=[it.a,...(Array.isArray(it.alt)?it.alt:[])].map(norm);
   let ok=accepted.includes(norm(val));
-  if(!ok&&(it.type==='translate'||it.type==='fix')&&sampleFn){
-    const fb=document.getElementById('fb'); fb.innerHTML='<div class="fb neutral"><div class="loader"><i></i><span>Проверяю ответ…</span></div></div>';
+  if(!ok&&['translate','fix','write','dialog'].includes(it.type)&&aiReady){
+    const fb=document.getElementById('fb'); fb.innerHTML='<div class="check neutral"><div class="head"><span>Проверка</span></div><div class="body"><div class="loader"><i></i><span>Читаю ваш ответ…</span></div></div></div>';
     lockInputs();
     try{
-      const r=await sampleFn.json(`Проверь ответ ученика по корейскому. Тема: ${byId[it.topic]?.t||''} (${byId[it.topic]?.f||''}). Задание: ${it.q}. Эталонный ответ: ${it.a}. Ответ ученика: ${val}. Считай ответ верным, если грамматика по теме и смысл правильные, даже если выбраны другие слова или опущены частицы, допустимые в разговорной речи. Ответь только JSON {"ok":true|false,"fb":"короткое объяснение по-русски, 1-2 предложения, что именно верно или неверно"}.`,{modelTier:'quick'});
-      ok=!!(r&&r.ok); finishItem(ok,r&&r.fb?String(r.fb):'',it,val); return;
-    }catch(e){ finishItem(false,'Не удалось проверить через ИИ ('+aiError(e)+'). Сравните с эталоном.',it,val); return; }
+      const r=await sampleFn.json(`Проверь ответ ученика по корейскому. Тема: ${byId[it.topic]?.t||''} (${byId[it.topic]?.f||''}). Задание: ${it.text?it.text+' / ':''}${it.q}. Образец: ${it.a}. Ответ ученика: ${val}. Верно, если грамматика темы и смысл правильные, даже при других словах или разговорном опускании частиц; для свободного письма верно, если нет грубых ошибок и грамматика темы использована. Ответь только JSON {"ok":true|false,"fb":"1–2 предложения по-русски, что верно или неверно","fix":"исправленный вариант ответа ученика по-корейски или пустая строка"}.`,{kind:'check',max_tokens:260});
+      ok=!!(r&&r.ok); finishItem(ok,r&&r.fb?String(r.fb):'',it,val,r&&r.fix?String(r.fix):''); return;
+    }catch(e){ finishItem(false,'Не удалось проверить через ИИ ('+aiError(e)+'). Сравните с образцом.',it,val); return; }
   }
   finishItem(ok,'',it,val);
 }
-function lockInputs(){ document.querySelectorAll('#view-train .opt, #view-train #ans button, #view-train #inp, #skip').forEach(x=>x.disabled=true); }
-function finishItem(ok,note,it,val){
+function lockInputs(){ document.querySelectorAll('#view-train .opt, #view-train .tok, #view-train #check, #view-train #check-order, #view-train #reset-order, #view-train #inp, #skip').forEach(x=>x.disabled=true); }
+function finishItem(ok,note,it,val,fix){
   lockInputs();
+  const sk=SKILL_OF[it.type], sc=session.scene;
   document.querySelectorAll('#view-train .opt').forEach(b=>{ const txt=it.options[+b.dataset.i]; if(norm(txt)===norm(it.a)) b.classList.add('right'); else if(val!==undefined&&norm(txt)===norm(val)&&!ok) b.classList.add('wrong'); });
-  session.results[session.idx]=ok; updateTopic(it.topic,ok); api('attempt',{attempt:{topic:it.topic,type:it.type,q:it.q,a:it.a,user:val,correct:ok}}).catch(()=>{});
-  if(!ok){ state.errors.push({id:it.topic,q:it.q,a:it.a,ts:Date.now()}); state.errors=state.errors.slice(-40); save(); }
+  session.results[session.idx]=ok; updateTopic(it.topic,ok);
+  const s=state.skills[sk]; s.n++; if(ok) s.c++;
+  if(!ok){ state.errors.push({id:it.topic,q:it.q||it.text||'',a:it.a,ts:Date.now()}); state.errors=state.errors.slice(-40); }
+  save();
+  api('attempt',{attempt:{topic:it.topic,type:it.type,q:it.q||it.text||'',a:it.a,user:val,correct:ok}}).catch(()=>{});
+  const sample=['write','dialog','translate','fix'].includes(it.type)&&!ok;
   const fb=document.getElementById('fb');
-  fb.innerHTML=`<div class="fb ${ok?'ok':'bad'}"><b>${ok?'Верно':'Не совсем'}</b>${ok?'':` · правильно: <span class="ko">${esc(it.a)}</span>`}${note?`<span class="why">${esc(note)}</span>`:''}${it.why?`<span class="why">${esc(it.why)}</span>`:''}</div><div class="row" style="margin-top:12px"><button class="btn primary" id="next">${session.idx+1<session.items.length?'Дальше':'Итоги'}</button></div>`;
+  fb.innerHTML=`<div class="check ${ok?'ok':'bad'}"><div class="head"><span>${SKILLS[sk].nm} · ${ok?'Успех':'Провал'}</span><span class="ko" style="letter-spacing:0;text-transform:none">${esc(SKILLS[sk].ko)} · ${esc(sc.ko)}</span></div><div class="body">
+    ${ok?'':`<span class="quote">${sample?'Образец':'Правильно'}: <span class="ko">${esc(it.a)}</span></span>`}
+    ${fix&&norm(fix)!==norm(val)?`<span class="quote">Ваш вариант с правкой: <span class="ko">${esc(fix)}</span></span>`:''}
+    ${note?`<span class="why">${esc(note)}</span>`:''}${it.why?`<span class="why">${esc(it.why)}</span>`:''}</div></div>
+    <div class="row" style="margin-top:12px"><button class="btn primary" id="next">${session.idx+1<session.items.length?'Дальше':'Итоги'}</button></div>`;
   const nb=document.getElementById('next'); nb.focus(); nb.onclick=()=>{ session.idx++; renderTrain(); };
-  document.querySelectorAll('#view-train .progress-dots i')[session.idx].className=ok?'ok':'bad';
+  const dots=document.querySelectorAll('#view-train .progress-dots i'); if(dots[session.idx]) dots[session.idx].className=ok?'ok':'bad';
 }
 function renderSummary(){
   const n=session.results.length, c=session.results.filter(Boolean).length;
-  document.getElementById('view-train').innerHTML=`<div class="card">
+  const bySkill={}; session.items.slice(0,n).forEach((it,i)=>{ const k=SKILL_OF[it.type]; bySkill[k]=bySkill[k]||{n:0,c:0}; bySkill[k].n++; if(session.results[i]) bySkill[k].c++; });
+  document.getElementById('view-train').innerHTML=`<div class="panel">
+    <div class="panel-art short" style="position:relative">${art(session.scene.id)}<span class="caption"><span class="ko">${esc(session.scene.ko)}</span>${esc(session.scene.ru)}</span></div>
     <div class="eyebrow">Итоги тренировки</div>
-    <h2 style="font-size:24px;margin-top:6px">${c} из ${n} верно</h2>
-    <div style="display:grid;gap:10px;margin-top:14px">${session.topics.map(t=>{ const p=tp(t.id); const [lab,cls]=status(t); return `<div class="row"><span class="ko grow" style="font-weight:500">${esc(t.t)}</span><span class="chip ${cls}">${lab}</span><span class="bar" style="width:90px"><i style="width:${Math.round(p.s*100)}%"></i></span></div>`; }).join('')}</div>
+    <h2 style="font-size:30px;margin-top:6px">${c} из ${n} верно</h2>
+    <div class="row" style="margin-top:10px">${Object.keys(bySkill).map(k=>`<span class="chip ${SKILLS[k].cls||'acc'}">${SKILLS[k].nm} ${bySkill[k].c}/${bySkill[k].n}</span>`).join('')}</div>
+    <div style="display:grid;gap:10px;margin-top:16px">${session.topics.map(t=>{ const p=tp(t.id); const [lab,cls]=status(t); return `<div class="row"><span class="ko grow" style="font-weight:500">${esc(t.t)}</span><span class="chip ${cls}">${lab}</span><span class="bar" style="width:90px"><i style="width:${Math.round(p.s*100)}%"></i></span></div>`; }).join('')}</div>
     <div class="row" style="margin-top:18px"><button class="btn primary" id="again">Новая тренировка</button><button class="btn" id="same">Ещё раз эти темы</button><button class="btn ghost" id="home">На главную</button></div>
   </div>`;
   document.getElementById('again').onclick=()=>startSession(pickTrainingTopics());
@@ -898,25 +1164,25 @@ function renderSummary(){
 }
 
 /* ============ СЛОВА ============ */
-let flip=false, listMode=false, exampleCtl=null;
+let flip=false, listMode=false;
 const INTERVALS=[10*60e3, 1*864e5, 3*864e5, 7*864e5, 14*864e5, 30*864e5];
 function dueWords(){ const now=Date.now(); return VOCAB.map((_,i)=>i).filter(i=>{ const v=state.vocab[i]; return !v||(v.d||0)<=now; }); }
 function renderVocab(){
   const v=document.getElementById('view-vocab'); const due=dueWords();
   const header=`<div class="row" style="justify-content:space-between"><div><div class="eyebrow">Словарь</div><p class="muted small" style="margin:4px 0 0">${VOCAB.length} слов из конспекта и уроков · к повторению сейчас: <b>${due.length}</b></p></div><button class="btn" id="mode">${listMode?'Карточки':'Весь список'}</button></div>`;
   if(listMode){ v.innerHTML=header+`<div class="vocab-list">${VOCAB.map(([k,r],i)=>{ const b=state.vocab[i]?.b||0; return `<div><span class="ko">${esc(k)}</span><span class="muted" style="text-align:right">${esc(r)}<span class="box-dots">${[1,2,3,4,5].map(x=>`<i class="${b>=x?'on':''}"></i>`).join('')}</span></span></div>`; }).join('')}</div>`; document.getElementById('mode').onclick=()=>{ listMode=false; renderVocab(); }; return; }
-  if(!due.length){ v.innerHTML=header+`<div class="card"><h2 style="font-size:19px">На сегодня всё повторено</h2><p class="muted" style="margin:6px 0 0">Следующие карточки появятся по расписанию интервального повторения.</p></div>`; document.getElementById('mode').onclick=()=>{ listMode=true; renderVocab(); }; return; }
+  if(!due.length){ v.innerHTML=header+`<div class="panel"><h2 style="font-size:24px">На сегодня всё повторено</h2><p class="muted" style="margin:6px 0 0">Следующие карточки появятся по расписанию интервального повторения.</p></div>`; document.getElementById('mode').onclick=()=>{ listMode=true; renderVocab(); }; return; }
   const i=due[0], [k,r]=VOCAB[i];
   v.innerHTML=header+`
   <button class="flash" id="flash"><span class="w">${esc(k)}</span>${flip?`<span class="m">${esc(r)}</span>`:`<span class="hint">нажмите, чтобы увидеть перевод</span>`}</button>
-  <div class="row" style="justify-content:center">${flip?`<button class="btn" id="no" style="border-color:var(--bad);color:var(--bad)">Не помню</button><button class="btn primary" id="yes">Помню</button>`:`<button class="btn" id="reveal">Показать перевод</button>`}<button class="btn ghost" id="example" ${aiReady?'':'disabled'}>Пример с этим словом</button></div>
+  <div class="row" style="justify-content:center">${flip?`<button class="btn" id="no" style="color:var(--bad)">Не помню</button><button class="btn primary" id="yes">Помню</button>`:`<button class="btn" id="reveal">Показать перевод</button>`}<button class="btn ghost" id="example" ${aiReady?'':'disabled'}>Пример из жизни</button></div>
   <div class="ai-box" id="example-box"></div>`;
   document.getElementById('mode').onclick=()=>{ listMode=true; renderVocab(); };
   const doFlip=()=>{ flip=true; renderVocab(); };
   document.getElementById('flash').onclick=doFlip; const rv=document.getElementById('reveal'); if(rv) rv.onclick=doFlip;
-  const grade=ok=>{ const cur=state.vocab[i]||{b:0,d:0}; const b=ok?Math.min(5,cur.b+1):0; state.vocab[i]={b,d:Date.now()+INTERVALS[b]}; state.days[today()]=(state.days[today()]||0)+0; save(); flip=false; renderVocab(); };
+  const grade=ok=>{ const cur=state.vocab[i]||{b:0,d:0}; const b=ok?Math.min(5,cur.b+1):0; state.vocab[i]={b,d:Date.now()+INTERVALS[b]}; save(); flip=false; renderVocab(); };
   const y=document.getElementById('yes'), nn=document.getElementById('no'); if(y) y.onclick=()=>grade(true); if(nn) nn.onclick=()=>grade(false);
-  document.getElementById('example').onclick=async()=>{ const box=document.getElementById('example-box'); if(!aiReady) return; if(exampleCtl) exampleCtl.abort(); exampleCtl=new AbortController(); box.textContent='…'; try{ await sampleFn(`Дай два коротких простых предложения на корейском (уровень A1–A2, стиль 해요체) со словом «${k}» (${r}), каждое с переводом на русский. Только предложения и переводы, без пояснений.`,{modelTier:'quick',signal:exampleCtl.signal,onText:({text})=>{ box.textContent=text; }}); }catch(e){ if(e.code!=='cancelled') box.textContent=aiError(e); } };
+  document.getElementById('example').onclick=()=>{ const sc=pickScene(); aiText(`Два коротких бытовых предложения на корейском (A1–A2, 해요체) со словом «${k}» (${r}) из жизни в Корее, сцена: ${sc.ko}. К каждому перевод на русский. Только предложения и переводы.`,'example-box',['example'],200); };
 }
 
 /* ============ СТАРТ ============ */
