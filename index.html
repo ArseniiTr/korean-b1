@@ -1141,7 +1141,7 @@ try{ const raw=localStorage.getItem(KEY); if(raw){ state=migrate(JSON.parse(raw)
 function migrate(s){ const f=fresh(); return {...f,...s,topics:{...f.topics,...(s.topics||{})},vocab:s.vocab||{},errors:s.errors||[],days:s.days||{},skills:{...f.skills,...(s.skills||{})},recent:{...f.recent,...(s.recent||{})},scenes:s.scenes||{},level:{...f.level,...(s.level||{})},settings:{...f.settings,...(s.settings||{})},ach:s.ach||{},achKo:s.achKo||{}}; }
 
 /* ============ СЕРВЕР: ВХОД, ПРОГРЕСС, ИИ ============ */
-const API='https://fdrsevvkkzogljgelcrv.supabase.co/functions/v1/tutor';
+const API='https://korean-b1-tutor.korean-b1-tutor.workers.dev';
 const TOKEN_KEY='korean-b1-token';
 let TOKEN=null; try{ TOKEN=localStorage.getItem(TOKEN_KEY); }catch(e){}
 let saveTimer=null, aiReady=true, serverStatus=null;
@@ -1150,7 +1150,7 @@ async function api(action,payload){
   let r; try{ r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,token:TOKEN,...(payload||{})})}); }
   catch(e){ const err=new Error('server_down'); err.code='server_down'; throw err; }
   let j; try{ j=await r.json(); }catch(e){ j={error:r.status>=500?'server_down':'bad_response'}; }
-  if(!r.ok){ let code=j.error||('http_'+r.status); if(r.status>=500||code==='server_error') code='server_down'; // бесплатный Supabase засыпает: ошибки сервера не считаем ошибкой кода или сессии
+  if(!r.ok){ let code=j.error||('http_'+r.status); if(r.status>=500||code==='server_error') code='server_down'; // ошибки сервера не считаем ошибкой кода или сессии
     if(code==='unauthorized'&&TOKEN) logout(); const err=new Error(code); err.code=code; err.text=j.text; err.detail=j.detail; throw err; }
   return j;
 }
@@ -1187,7 +1187,7 @@ function renderGate(){
   <form id="gate-form"><input id="pin" type="password" autocomplete="${configured?'current-password':'new-password'}" placeholder="Код доступа" aria-label="Код доступа"><button class="btn primary" type="submit">${configured?'Войти':'Создать'}</button></form>
   <p id="gate-err" class="small" style="margin:8px 0 0;color:var(--bad)"></p>
   ${st&&!st.ai?'<p class="notice" style="margin:12px 0 0">Ключ Anthropic API ещё не добавлен: прогресс сохраняется, но задания пока не сгенерируются. Ключ вводится на главной после входа.</p>':''}
-  ${st?'':'<p class="notice" id="wake" style="margin:12px 0 0">Сервер не отвечает. Скорее всего, бесплатный Supabase уснул после недели без занятий и сейчас просыпается — это занимает одну-две минуты. Страница проверит снова сама. <button class="btn small" id="wake-retry" type="button">Проверить сейчас</button></p>'}</div><div class="mosaic"></div></div>`;
+  ${st?'':'<p class="notice" id="wake" style="margin:12px 0 0">Сервер не отвечает. Проверьте интернет или подождите минуту. Страница проверит снова сама. <button class="btn small" id="wake-retry" type="button">Проверить сейчас</button></p>'}</div><div class="mosaic"></div></div>`;
   if(!st){ const retry=()=>{ const w=document.getElementById('wake'); if(w) w.firstChild.textContent='Проверяю… '; boot(); }; document.getElementById('wake-retry').onclick=retry; if(bootRetries<12){ bootRetries++; setTimeout(()=>{ if(!serverStatus&&!document.getElementById('gate').classList.contains('hidden')) retry(); },15000); } } else bootRetries=0;
   const form=document.getElementById('gate-form'), err=document.getElementById('gate-err');
   form.onsubmit=async e=>{ e.preventDefault(); const pin=document.getElementById('pin').value; err.textContent=''; form.querySelector('button').disabled=true;
@@ -1340,7 +1340,7 @@ function renderHome(){
   ${aiReady?'':`<div class="panel" style="outline:3px solid var(--red)">
     <div class="eyebrow">Подключить ИИ</div>
     <h2 style="font-size:22px;margin-top:6px">Нужен ключ Anthropic API</h2>
-    <p class="muted" style="margin:6px 0 12px">Создайте ключ на <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> и вставьте сюда один раз. Он хранится только в вашей базе Supabase и виден только серверной функции. Задания генерирует Haiku 5.5, самая экономичная модель.</p>
+    <p class="muted" style="margin:6px 0 12px">Создайте ключ на <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> и вставьте сюда один раз. Он хранится только в вашей базе Cloudflare D1 и виден только серверному воркеру. Задания генерирует Haiku 5.5, самая экономичная модель.</p>
     <form id="key-form" class="answer" style="margin:0"><input id="key-inp" type="password" autocomplete="off" placeholder="sk-ant-…" aria-label="Ключ Anthropic API" style="font-family:var(--body)"><button class="btn primary" type="submit">Проверить и сохранить</button></form>
     <p id="key-err" class="small" style="margin:8px 0 0;color:var(--bad)"></p>
   </div>`}
