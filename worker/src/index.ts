@@ -1,6 +1,6 @@
 // Серверная часть учебника «Корейский до B1» на Cloudflare Workers (бесплатный тариф, не засыпает).
 // База — Cloudflare D1 (SQLite). JSON-API и коды ошибок те же, что были у Supabase Edge Function `tutor`:
-// POST {action: status|setup|login|load|save|attempt|set_key|clear_key|ai|stats, token, ...}.
+// POST {action: status|setup|login|load|save|attempt|set_key|clear_key|ai|stats|backups|restore, token, ...}.
 import Anthropic from "@anthropic-ai/sdk";
 
 export interface Env {
@@ -128,6 +128,29 @@ async function callAi(env: Env, body: Record<string, unknown>): Promise<Response
   }
 }
 
+// Защита прогресса: перед перезаписью сохраняем снимок (не чаще раза в час, или всегда, если новых данных заметно меньше), храним последние 60
+const BACKUP_KEEP = 60;
+function countAnswers(data: string): { answers: number; days: number } {
+  try {
+    const s = JSON.parse(data) as { topics?: Record<string, { n?: number }>; days?: Record<string, number> };
+    return { answers: Object.values(s.topics ?? {}).reduce((a, p) => a + (p?.n ?? 0), 0), days: Object.keys(s.days ?? {}).length };
+  } catch { return { answers: 0, days: 0 }; }
+}
+async function snapshotProgress(db: D1Database, force: boolean, incoming?: string): Promise<void> {
+  const cur = await db.prepare("SELECT data, updated_at FROM progress WHERE id = 'me'").first<{ data: string; updated_at: string }>();
+  if (!cur?.data) return;
+  if (!force) {
+    const last = await db.prepare("SELECT created_at FROM progress_backup ORDER BY id DESC LIMIT 1").first<{ created_at: string }>();
+    const stale = !last || Date.now() - new Date(last.created_at).getTime() > 3600e3;
+    const shrink = incoming !== undefined && countAnswers(cur.data).answers >= 10 && countAnswers(incoming).answers < countAnswers(cur.data).answers * 0.5;
+    if (!stale && !shrink) return;
+  }
+  await db.batch([
+    db.prepare("INSERT INTO progress_backup (data, updated_at, created_at) VALUES (?1, ?2, ?3)").bind(cur.data, cur.updated_at, nowIso()),
+    db.prepare("DELETE FROM progress_backup WHERE id NOT IN (SELECT id FROM progress_backup ORDER BY id DESC LIMIT ?1)").bind(BACKUP_KEEP),
+  ]);
+}
+
 async function stats(db: D1Database): Promise<Response> {
   const { results: attempts } = await db
     .prepare("SELECT topic_id, correct FROM attempts ORDER BY created_at DESC LIMIT 5000")
@@ -184,6 +207,8 @@ export default {
       }
       if (action === "save") {
         if (!body.data || typeof body.data !== "object") return json({ error: "no_data" }, 400);
+        const incoming = JSON.stringify(body.data);
+        await snapshotProgress(db, false, incoming);
         await db
           .prepare("INSERT INTO progress (id, data, updated_at) VALUES ('me', ?1, ?2) ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at")
           .bind(JSON.stringify(body.data), nowIso())
@@ -223,6 +248,20 @@ export default {
       if (action === "clear_key") {
         await db.prepare("DELETE FROM app_config WHERE key = 'anthropic_api_key'").run();
         return json({ ok: true });
+      }
+      if (action === "backups") {
+        const { results } = await db.prepare("SELECT id, data, updated_at, created_at FROM progress_backup ORDER BY id DESC LIMIT ?1").bind(BACKUP_KEEP)
+          .all<{ id: number; data: string; updated_at: string; created_at: string }>();
+        return json({ list: results.map((b) => ({ id: b.id, created_at: b.created_at, updated_at: b.updated_at, ...countAnswers(b.data) })) });
+      }
+      if (action === "restore") {
+        const row = await db.prepare("SELECT data FROM progress_backup WHERE id = ?1").bind(Number(body.id)).first<{ data: string }>();
+        if (!row) return json({ error: "not_found" }, 404);
+        await snapshotProgress(db, true); // текущее состояние тоже остаётся снимком
+        await db.prepare("INSERT INTO progress (id, data, updated_at) VALUES ('me', ?1, ?2) ON CONFLICT(id) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at")
+          .bind(row.data, nowIso()).run();
+        let data: unknown = null; try { data = JSON.parse(row.data); } catch { data = null; }
+        return json({ data });
       }
       if (action === "ai") return await callAi(env, body);
       if (action === "stats") return await stats(db);

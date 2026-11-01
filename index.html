@@ -1139,7 +1139,7 @@ const KEY='korean-b1-progress';
 const today=()=>new Date().toISOString().slice(0,10);
 function fresh(){
   const s={v:4,updated:0,topics:{},vocab:{},errors:[],days:{},skills:{g:{n:0,c:0},r:{n:0,c:0},w:{n:0,c:0}},recent:{g:[],r:[],w:[]},scenes:{},
-    level:{cal:null,calAt:0,calN:0,offset:0,hist:[],profile:null},settings:{goal:10},ach:{},achKo:{}};
+    level:{cal:null,calAt:0,calN:0,offset:0,hist:[],profile:null},settings:{goal:10},ach:{},achKo:{},extra:{},explain:{}};
   T.forEach(t=>{ if(t.k) s.topics[t.id]={s:0.6,n:0,c:0,t:0,r:'',p:0}; });
   return s;
 }
@@ -1148,13 +1148,13 @@ try{ const raw=localStorage.getItem(KEY); if(raw){ state=migrate(JSON.parse(raw)
 function migrate(s){ const f=fresh(); const m=migrateRaw(s,f); Object.values(m.topics).forEach(normTopic); return m; }
 // старый формат темы {s,n,c,t}: история последних ответов восстанавливается из счётчиков, ответы «своими словами» начинаются с нуля
 function normTopic(p){ if(typeof p.r!=='string'){ const n=Math.min(p.n||0,HIST_N), c=Math.min(n,Math.round(n*(p.c||0)/(p.n||1))); p.r='1'.repeat(c)+'0'.repeat(n-c); } if(typeof p.p!=='number') p.p=0; return p; }
-function migrateRaw(s,f){ return {...f,...s,topics:{...f.topics,...(s.topics||{})},vocab:s.vocab||{},errors:s.errors||[],days:s.days||{},skills:{...f.skills,...(s.skills||{})},recent:{...f.recent,...(s.recent||{})},scenes:s.scenes||{},level:{...f.level,...(s.level||{})},settings:{...f.settings,...(s.settings||{})},ach:s.ach||{},achKo:s.achKo||{}}; }
+function migrateRaw(s,f){ return {...f,...s,topics:{...f.topics,...(s.topics||{})},vocab:s.vocab||{},errors:s.errors||[],days:s.days||{},skills:{...f.skills,...(s.skills||{})},recent:{...f.recent,...(s.recent||{})},scenes:s.scenes||{},level:{...f.level,...(s.level||{})},settings:{...f.settings,...(s.settings||{})},ach:s.ach||{},achKo:s.achKo||{},extra:s.extra||{},explain:s.explain||{}}; }
 
 /* ============ СЕРВЕР: ВХОД, ПРОГРЕСС, ИИ ============ */
 const API='https://korean-b1-tutor.korean-b1-tutor.workers.dev';
 const TOKEN_KEY='korean-b1-token';
 let TOKEN=null; try{ TOKEN=localStorage.getItem(TOKEN_KEY); }catch(e){}
-let saveTimer=null, aiReady=true, serverStatus=null;
+let saveTimer=null, aiReady=true, serverStatus=null, remoteSeen=false;
 function setSync(mode,text){ const el=document.getElementById('sync'); el.className='sync '+mode; el.querySelector('span').textContent=text; }
 async function api(action,payload){
   let r; try{ r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,token:TOKEN,...(payload||{})})}); }
@@ -1173,17 +1173,28 @@ function save(){
   try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){}
   clearTimeout(saveTimer); saveTimer=setTimeout(persistRemote,800);
 }
+// есть ли в состоянии хоть какой-то прогресс (ответы, отметки слов, дни занятий)
+function stateHasData(s){ return Object.values((s&&s.topics)||{}).some(p=>p&&p.n>0)||Object.keys((s&&s.vocab)||{}).length>0||Object.keys((s&&s.days)||{}).length>0; }
+function adoptRemote(remote){ state=remote; try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){} renderAll(); }
 async function persistRemote(){
   if(!TOKEN) return;
-  try{ await api('save',{data:state}); setSync('ok','Сохранено'); }
-  catch(e){ setSync('err',e.code==='server_down'?'Сервер спит, сохраню позже':'Не сохранено: '+e.code); if(e.code==='server_down'){ clearTimeout(saveTimer); saveTimer=setTimeout(persistRemote,30000); } }
+  try{
+    if(!remoteSeen){ // в этой сессии ещё не сверялись с базой: не затирать её вслепую (новое устройство, очищенный браузер)
+      const r=await api('load'); remoteSeen=true;
+      if(r.data){ const remote=migrate(r.data); if(stateHasData(remote)&&(!stateHasData(state)||(remote.updated||0)>(state.updated||0))){ adoptRemote(remote); setSync('ok','Загружено из базы'); return; } }
+    }
+    await api('save',{data:state}); setSync('ok','Сохранено'); }
+  catch(e){ setSync('err',e.code==='server_down'?'Сервер не отвечает, сохраню позже':'Не сохранено: '+e.code); if(e.code==='server_down'){ clearTimeout(saveTimer); saveTimer=setTimeout(persistRemote,30000); } }
 }
 async function loadRemote(){
   if(!TOKEN) return;
   setSync('','Синхронизация…');
   try{
-    const r=await api('load');
-    if(r.data){ const remote=migrate(r.data); if((remote.updated||0)>(state.updated||0)){ state=remote; try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){} renderAll(); } else if((state.updated||0)>(remote.updated||0)) await persistRemote(); }
+    const r=await api('load'); remoteSeen=true;
+    if(r.data){ const remote=migrate(r.data);
+      // база побеждает, если локально пусто или в базе более свежая версия; иначе отправляем локальную
+      if((!stateHasData(state)&&stateHasData(remote))||(remote.updated||0)>(state.updated||0)) adoptRemote(remote);
+      else if((state.updated||0)>(remote.updated||0)) await persistRemote(); }
     else await persistRemote();
     setSync('ok','Сохранено');
   }catch(e){ if(e.code!=='unauthorized') setSync('err','База недоступна: '+e.code); }
@@ -1331,9 +1342,15 @@ function vocabIndexOf(lemma){ const k=vkey(lemma).replace(/^[-~]/,''); if(!k) re
    Если в задании (тренировка, чтение, письмо, ачивка) ученик ошибся на слове, отмеченном «знаю», ИИ называет его словарную форму,
    мы находим слово в списке и переводим в «учу»: оно перестаёт считаться знакомым (и выпадает из расчёта уровня)
    и возвращается в очередь карточек, пока ученик снова не подтвердит знание. */
-function demoteWords(lemmas,src){ const hit=[]; (Array.isArray(lemmas)?lemmas:[]).slice(0,4).forEach(l=>{ const i=vocabIndexOf(String(l||'')); if(i<0||hit.includes(i)) return; const cur=state.vocab[i]||{b:0,d:0}; const now=Date.now();
+function demoteWords(lemmas,src){ const hit=[], extra=[]; (Array.isArray(lemmas)?lemmas:[]).slice(0,4).forEach(l=>{ const obj=l&&typeof l==='object'; const w=String(obj?(l.w||l.word||''):(l||'')).trim(), ru=obj?String(l.ru||''):''; if(!w) return; const i=vocabIndexOf(w); const now=Date.now();
+  if(i<0){ if(addExtraWord(w,ru,src)) extra.push(w); return; }
+  if(hit.includes(i)) return; const cur=state.vocab[i]||{b:0,d:0};
   if(!wordKnown(i)&&cur.k===false){ state.vocab[i]={...cur,x:(cur.x||0)+1,xt:now,d:Math.min(cur.d||now,now)}; return; }
-  state.vocab[i]={...cur,k:false,b:0,d:now,x:(cur.x||0)+1,xt:now,xs:String(src||'')}; hit.push(i); }); return hit; }
+  state.vocab[i]={...cur,k:false,b:0,d:now,x:(cur.x||0)+1,xt:now,xs:String(src||'')}; hit.push(i); }); return {hit,extra}; }
+// слова, которых нет среди 734 базовых, — личная база «надо выучить» (state.extra[слово] = {ru, src, x, k, xt})
+function addExtraWord(w,ru,src){ w=vkey(w).replace(/^[-~]/,''); if(!w||!/^[\uAC00-\uD7A3\s]+$/.test(w)||w.length>20) return false; const cur=state.extra[w]||{ts:Date.now(),x:0}; state.extra[w]={...cur,ru:ru||cur.ru||'',src:src||cur.src||'',x:(cur.x||0)+1,k:false,xt:Date.now()}; return true; }
+function extraLearning(){ return Object.keys(state.extra||{}).filter(w=>state.extra[w].k===false).sort((a,b)=>(state.extra[b].xt||0)-(state.extra[a].xt||0)); }
+function learningWordsList(n){ return shuffle([...relearnWords().map(i=>VOCAB[i][0]),...extraLearning()]).slice(0,n); }
 function relearnWords(){ return VOCAB.map((_,i)=>i).filter(i=>{ const v=state.vocab[i]; return !!v&&v.k===false&&(v.x||0)>0; }); }
 
 /* ============ УРОВЕНЬ ПО ШКАЛЕ 한국어학당 (Институт корейского языка Ёнсе) ============
@@ -1363,7 +1380,7 @@ function assess(){
   return Math.max(0,Math.min(3.5,base));
 }
 function levelLabel(x){ if(x>=3) return '3급 · B1 достигнут'; const g=Math.floor(x)+1; const f=x-Math.floor(x); return `${g}급 ${f<0.33?'초반':(f<0.66?'중반':'후반')} · ${KLI[g-1].cefr}`; }
-function genParams(){ const L=Math.max(0,Math.min(3.5,assess()+state.level.offset)); const tier=L<1?1:(L<2?2:3); const maxWords=Math.round(6+L*3); const readSent=L<1?3:(L<2?4:5); return {L,tier,maxWords,readSent,label:levelLabel(L)}; }
+function genParams(){ const L=Math.max(0,Math.min(3.5,assess()+state.level.offset)); const tier=L<1?1:(L<2?2:3); const maxWords=L<1?4+Math.round(L*2):(L<2?7+Math.round((L-1)*2):9+Math.round((L-2)*3)); const readSent=L<1?3:(L<2?4:5); return {L,tier,maxWords,readSent,label:levelLabel(L)}; }
 function adjustOffset(d,why){ const L=state.level; L.offset=Math.max(-1,Math.min(1,+(L.offset+d).toFixed(2))); L.hist.push({ts:Date.now(),d,why}); L.hist=L.hist.slice(-50); save(); }
 function vocabRating(){ const total=VOCAB.length, known=VOCAB.filter((_,i)=>wordKnown(i)).length; return {total,known,tiers:KLI.map(k=>({g:k.g,n:tierWords(k.g).length,known:tierWords(k.g).filter(wordKnown).length,words:k.words}))}; }
 
@@ -1371,6 +1388,7 @@ function vocabRating(){ const total=VOCAB.length, known=VOCAB.filter((_,i)=>word
 const TYPES=['mc','fill','fix','order','translate','read','write','dialog'];
 const SKILL_OF={mc:'g',fill:'g',fix:'g',order:'g',read:'r',translate:'w',write:'w',dialog:'w'};
 const SKILLS={g:{nm:'Грамматика',ko:'문법',cls:'acc',bar:'blue'},r:{nm:'Чтение',ko:'읽기',cls:'teal',bar:'teal'},w:{nm:'Письмо',ko:'쓰기',cls:'pink',bar:'pink'}};
+const TASK_HINT={mc:'Выберите вариант, который подходит на место пропуска ___.',fill:'Впишите только пропущенное слово или окончание, не всё предложение.',fix:'В предложении одна ошибка по теме. Напишите всё предложение правильно.',order:'Нажимайте слова по порядку, чтобы собрать предложение по смыслу перевода.',translate:'Переведите на корейский в вежливом стиле 해요체.',read:'Прочитайте текст и выберите ответ на вопрос.',write:'Напишите 2–3 предложения по-корейски, используя грамматику темы; ИИ проверит смысл и грамматику.',dialog:'Допишите последнюю реплику диалога вместо ___ по подсказке.'};
 const TYPE_NAME={mc:'Выбор ответа',fill:'Подстановка',fix:'Исправьте ошибку',order:'Соберите предложение',translate:'Перевод на корейский',read:'Чтение',write:'Письмо',dialog:'Диалог'};
 function skillRate(k){ const s=state.skills[k]; return s.n?s.c/s.n:0; }
 function skillLabel(k){ const s=state.skills[k]; if(s.n<5) return 'мало данных'; const r=s.c/s.n; return r<0.5?'шатко':(r<0.75?'уверенно':'отлично'); }
@@ -1419,7 +1437,7 @@ function levelHtml(){
 
 /* ============ ГЛАВНАЯ ============ */
 function renderHome(){
-  const m=mastered(), total=T.length, nn=nextNew(), nowT=pickTrainingTopics(), weak=weakTopics(5).filter(t=>!nowT.includes(t)).slice(0,3), rl=relearnWords(), done=state.days[today()]||0, goal=state.settings.goal, sc=pickScene(), vr=vocabRating();
+  const m=mastered(), total=T.length, nn=nextNew(), nowT=pickTrainingTopics(), weak=weakTopics(5).filter(t=>!nowT.includes(t)).slice(0,3), rl=[...relearnWords(),...extraLearning()], done=state.days[today()]||0, goal=state.settings.goal, sc=pickScene(), vr=vocabRating();
   const errs=state.errors.slice(-5).reverse();
   document.getElementById('view-home').innerHTML=`
   <div class="panel">
@@ -1451,9 +1469,19 @@ function renderHome(){
   ${errs.length?`<div><div class="eyebrow">Последние ошибки</div><ul class="errors plain" style="list-style:none;padding:0;margin-top:6px">${errs.map(e=>`<li><span class="ko">${esc(e.q)}</span><br><span class="muted">Правильно: </span><span class="ko">${esc(e.a)}</span> <span class="muted small">· ${esc(byId[e.id]?.t||achLabel(e.id))}</span></li>`).join('')}</ul></div>`:''}
   <p class="muted small">Программа по Integrated Korean Beginning 1–2 и «Korean Language for Beginners» Де Бенедиттиса; стартовая точка по вашему конспекту (последний урок 16 сентября 2026). Шкала уровней и формат калибровки — по Институту корейского языка Университета Ёнсе (한국어학당), объёмы словаря — по государственному стандарту 국제 통용 한국어 표준 교육과정. Сюжеты заданий: ${SCENES.map(s=>s.ko).join(', ')}.</p>
   <div id="ai-stats" class="muted small"></div>
+  <details class="method"><summary>Резервные копии прогресса</summary>
+    <p class="muted small" style="margin:8px 0">Прогресс хранится в базе на сервере и в этом браузере. Сервер сам делает снимок перед перезаписью не чаще раза в час и хранит последние 60. Ниже можно скачать копию, загрузить её обратно или вернуться к любому снимку.</p>
+    <div class="row"><button class="btn small" id="export">Скачать прогресс (JSON)</button><label class="btn small" style="cursor:pointer">Загрузить из файла<input type="file" id="import" accept="application/json,.json" hidden></label><button class="btn small" id="backups-load">Показать снимки на сервере</button></div>
+    <div id="backups" class="small" style="margin-top:8px"></div></details>
   <div><button class="btn ghost" id="logout">Выйти на этом устройстве</button></div>`;
   bindLessonButtons('view-home'); bindLevelButtons(); bindAchButtons('view-home');
   document.getElementById('logout').onclick=logout; loadStats();
+  document.getElementById('export').onclick=()=>{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(state)],{type:'application/json'})); a.download=`korean-b1-progress-${today()}.json`; a.click(); };
+  document.getElementById('import').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; try{ const s2=migrate(JSON.parse(await f.text())); const n=Object.values(s2.topics).reduce((a,p)=>a+(p.n||0),0); if(!confirm(`Заменить текущий прогресс данными из файла (${n} ответов по темам)?`)) return; s2.updated=Date.now(); state=s2; save(); renderAll(); toast('Прогресс загружен из файла'); }catch(x){ toast('Файл не похож на прогресс учебника'); } e.target.value=''; };
+  document.getElementById('backups-load').onclick=async()=>{ const box=document.getElementById('backups'); box.textContent='Загружаю…'; try{ const r=await api('backups'); if(!r.list.length){ box.textContent='Снимков ещё нет: первый появится при следующем сохранении.'; return; }
+    box.innerHTML=`<div class="vocab-list">${r.list.map(b=>`<div><span>${new Date(b.created_at).toLocaleString('ru-RU')}</span><span class="muted" style="display:flex;align-items:center;gap:8px"><span>${b.answers} ответов · ${b.days} дн.</span><button class="btn small" data-restore="${b.id}">Восстановить</button></span></div>`).join('')}</div>`;
+    box.querySelectorAll('[data-restore]').forEach(b=>b.onclick=async()=>{ if(!confirm('Заменить текущий прогресс этим снимком? Текущее состояние тоже сохранится как снимок.')) return; try{ const rr=await api('restore',{id:+b.dataset.restore}); remoteSeen=true; adoptRemote(migrate(rr.data)); toast('Прогресс восстановлен из снимка'); }catch(x){ toast('Не удалось восстановить: '+x.code); } }); }
+    catch(x){ box.textContent='Не удалось получить список: '+x.code; } };
   document.getElementById('go-vocab').onclick=()=>show('vocab'); document.getElementById('go-topics').onclick=()=>show('topics');
   const gr=document.getElementById('go-relearn'); if(gr) gr.onclick=()=>{ vocabMode='relearn'; show('vocab'); };
   const kf=document.getElementById('key-form'); if(kf) kf.onsubmit=async e=>{ e.preventDefault(); const inp=document.getElementById('key-inp'), err=document.getElementById('key-err'), btn=kf.querySelector('button'); err.textContent=''; btn.disabled=true; btn.textContent='Проверяю…';
@@ -1545,7 +1573,8 @@ function renderLesson(){
   <div class="row">
     <button class="btn primary" id="train-topic">Упражнения по теме</button>
     <button class="btn teal" id="story" ${aiReady?'':'disabled title="Ключ Anthropic API не добавлен"'}>История: <span class="ko">${esc(sc.ko)}</span></button>
-    <button class="btn" id="explain" ${aiReady?'':'disabled title="Ключ Anthropic API не добавлен"'}>Объяснить иначе</button>
+    <button class="btn" id="deep" ${aiReady?'':'disabled title="Ключ Anthropic API не добавлен"'}>Разобрать подробнее</button>
+    <button class="btn yellow" id="simple" ${aiReady?'':'disabled title="Ключ Anthropic API не добавлен"'}>Объяснить понятнее</button>
     ${(!p.n&&!t.k)?`<button class="btn ghost" id="mark-known">Уже знаю эту тему</button>`:''}
   </div>
   <div class="ai-box" id="explain-box"></div>
@@ -1554,16 +1583,25 @@ function renderLesson(){
   document.querySelectorAll('#view-lesson [data-w]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.w; const cur=state.vocab[i]||{b:0,d:0}; state.vocab[i]=wordKnown(i)?{...cur,k:false,b:0,d:Date.now()}:{...cur,k:true,b:Math.max(cur.b||0,3),d:Date.now()+7*864e5}; save(); renderLesson(); });
   document.getElementById('train-topic').onclick=()=>startSession([t]);
   const mk=document.getElementById('mark-known'); if(mk) mk.onclick=()=>{ state.topics[t.id]={s:0.6,n:0,c:0,t:Date.now(),r:'',p:0}; save(); renderLesson(); };
-  document.getElementById('explain').onclick=()=>aiText(`Объясни очень просто русскоязычному ученику уровня ${t.lv} грамматику «${t.t}» (${t.n}): 1) смысл одним предложением; 2) образование по шагам; 3) четыре новых бытовых примера из жизни в Корее (сцена: ${sc.ko}) с переводом, не повторяя: ${t.e.map(e=>e[0]).join(' / ')}; 4) типичная ошибка русскоязычных. До 170 слов, без markdown.`,'explain-box',['explain','story'],600);
-  document.getElementById('story').onclick=()=>aiText(`Напиши короткую бытовую историю (5–6 предложений, 해요체, уровень ${t.lv}) о жизни иностранца в Корее. Сцена: ${sc.ko} — ${sc.d}. Используй грамматику «${t.t}» не меньше трёх раз и в основном эти слова: ${knownWords(16)}. После истории дай перевод на русский. Без пояснений и заголовков.`,'explain-box',['explain','story'],650);
+  document.getElementById('deep').onclick=()=>explainTopic(t,'deep',sc); document.getElementById('simple').onclick=()=>explainTopic(t,'simple',sc);
+  document.getElementById('story').onclick=()=>aiText(`Напиши короткую бытовую историю (5–6 предложений, 해요체, уровень ${t.lv}) о жизни иностранца в Корее. Сцена: ${sc.ko} — ${sc.d}. Используй грамматику «${t.t}» не меньше трёх раз и в основном эти слова: ${knownWords(16)}. После истории дай перевод на русский. Без пояснений и заголовков.`,'explain-box',['deep','simple','story'],650);
   document.getElementById('gloss-ex').onclick=()=>gloss(t.e.map(e=>e[0]).join('\n'),'gloss-ex-box','gloss-ex');
+}
+// Разбор темы: подробный (структура из 6 пунктов) или максимально простой. Текст кэшируется в прогрессе — повторный показ без токенов.
+function explainTopic(t,kind,sc){ const box=document.getElementById('explain-box'); state.explain=state.explain||{}; const c=state.explain[t.id]||{};
+  if(c[kind]){ box.textContent=c[kind]; box.insertAdjacentHTML('beforeend',`<div class="tools"><span class="muted small">Сохранённый разбор</span><button class="btn small ghost" id="re-explain">Сгенерировать заново</button></div>`); document.getElementById('re-explain').onclick=()=>{ delete c[kind]; state.explain[t.id]=c; explainTopic(t,kind,sc); }; return; }
+  const ex=t.e.map(e=>e[0]).join(' / ');
+  const prompt=kind==='deep'
+    ?`Разбери подробно грамматику «${t.t}» (${t.n}) для русскоязычного ученика уровня ${t.lv}. Правило: ${t.f}. Пункты, каждый с новой строки и с цифрой: 1) Смысл и когда используется — 2–3 простых предложения, сравнение с тем, как это говорят по-русски. 2) Образование по шагам: отдельно после патчима и без, для глаголов и прилагательных, неправильные формы, если есть. 3) Шесть коротких бытовых примеров из жизни в Корее (сцена: ${sc.ko}) с переводом и в скобках дословным разбором; не повторяй: ${ex}. 4) Чем отличается от похожих конструкций. 5) Три типичные ошибки русскоязычных: неверно → верно, почему. 6) Два мини-диалога по две реплики, как это звучит в живой речи. Простой язык, без markdown. До 380 слов.`
+    :`Объясни грамматику «${t.t}» (${t.n}) максимально просто, как другу, который только начал учить корейский. Правило: ${t.f}. Дай: одну главную идею одним предложением; бытовую аналогию из русского языка; правило в одну строку; четыре очень коротких примера из жизни в Корее (сцена: ${sc.ko}) с переводом, не повторяя: ${ex}; одну подсказку, как не перепутать. До 130 слов, без markdown.`;
+  aiText(prompt,'explain-box',['deep','simple','story'],kind==='deep'?1200:450,'explain').then(ok=>{ if(!ok) return; const txt=box.textContent; if(txt&&txt.length>80){ c[kind]=txt; state.explain[t.id]=c; const keys=Object.keys(state.explain); if(keys.length>40) delete state.explain[keys[0]]; save(); } });
 }
 async function aiText(prompt,boxId,btnIds,maxTokens,kind){
   const box=document.getElementById(boxId); const btns=btnIds.map(id=>document.getElementById(id)).filter(Boolean);
   if(!aiReady){ box.textContent='Ключ Anthropic API не добавлен.'; return; }
   btns.forEach(b=>b.disabled=true); box.textContent='Думаю…';
-  try{ await sampleFn(prompt,{max_tokens:maxTokens,kind:kind||'text',onText:({text})=>{ box.textContent=text; }}); }
-  catch(e){ box.textContent=(e.text||'')+'\n'+aiError(e); }
+  try{ await sampleFn(prompt,{max_tokens:maxTokens,kind:kind||'text',onText:({text})=>{ box.textContent=text; }}); return true; }
+  catch(e){ box.textContent=(e.text||'')+'\n'+aiError(e); return false; }
   finally{ btns.forEach(b=>b.disabled=false); }
 }
 // Дословный перевод: порядок слов корейский, у каждого слова — значение и роль частицы
@@ -1597,6 +1635,8 @@ async function generate(){
     const res=await Promise.all(jobs.map(j=>genChunk(buildPrompt(j.t,j.types,session.scene)).then(arr=>arr.filter(validItem).map(x=>({...x,topic:j.t.id})))));
     const batches=session.topics.map(t=>res.filter((_,k)=>jobs[k].t===t).flat());
     let items=[]; const max=Math.max(...batches.map(b=>b.length)); for(let i=0;i<max;i++) batches.forEach(b=>{ if(b[i]) items.push(b[i]); });
+    // слишком длинные для уровня предложения отбрасываем, если после этого остаётся хотя бы половина заданий
+    const lim=genParams().maxWords+2; const tooLong=x=>['mc','fill','fix','order','translate','dialog'].includes(x.type)&&Math.max(koTokens(x.q||'').length,koTokens(x.a||'').length)>lim; const short=items.filter(x=>!tooLong(x)); if(short.length>=Math.min(4,items.length)) items=short;
     if(!items.length) throw {code:'invalid_json'};
     session.items=items.slice(0,8); session.loading=false;
   }catch(e){ session.loading=false; session.error=aiError(e); }
@@ -1612,12 +1652,12 @@ const SPEC={
  write:'write: "q" задание по-русски: ситуация из сцены и просьба написать 2–3 предложения по-корейски с этой грамматикой, "a" образец ответа',
  dialog:'dialog: "text" диалог из 3–4 реплик (가:/나:) про сцену, последняя реплика заменена на ___, "q" подсказка по-русски, что сказать, "a" образец реплики'};
 function buildPrompt(t,types,sc){
-  const used=[...new Set(types)]; const P=genParams();
-  return `Преподаватель корейского для русскоязычного взрослого, живущего в Корее. Уровень ученика по шкале 한국어학당: ${P.label} — лексика только уровней до ${P.tier}급, предложения не длиннее ${P.maxWords} слов, текст для чтения ${P.readSent} предложений. Тема: «${t.t}» (${t.n}). Правило: ${t.f}. Примеры: ${t.e.slice(0,3).map(e=>e[0]).join('; ')}.
+  const used=[...new Set(types)]; const P=genParams(); const lw=learningWordsList(5);
+  return `Преподаватель корейского для русскоязычного взрослого, живущего в Корее. Уровень ученика по шкале 한국어학당: ${P.label} — лексика только уровней до ${P.tier}급, предложения не длиннее ${P.maxWords} слов, текст для чтения ${P.readSent} предложений.${P.tier===1?` Уровень начальный: каждое предложение очень короткое и простое, 3–${P.maxWords} слов, одна грамматическая конструкция, без придаточных, только самые частые слова.`:''} Тема: «${t.t}» (${t.n}). Правило: ${t.f}. Примеры: ${t.e.slice(0,3).map(e=>e[0]).join('; ')}.
 Сцена: ${sc.ko} — ${sc.d}. Все предложения и тексты бытовые, про реальную жизнь в Корее, с этими реалиями.
-Знакомые слова, используй в основном их: ${knownWords(24)}.
+Знакомые слова, используй в основном их: ${knownWords(24)}.${lw.length?` Слова, которые ученик сейчас учит, вставь по одному в разные задания: ${lw.join(', ')}.`:''}
 Составь ровно ${types.length} заданий, типы строго по порядку: ${types.join(', ')}.
-Только JSON-массив объектов {"type","q","text","options","a","alt","why"}. ${used.map(k=>SPEC[k]).join('. ')}. "alt" — другие верные ответы (можно []), "why" — объяснение по-русски до 12 слов. Коротко, без переносов строк вне "text". Стиль 해요체. Перед ответом проверь каждое задание: ответ грамматически верен (받침!), перевод точно соответствует предложению. Никакого текста вне JSON.`;
+В "q" формулируй задание однозначно: что именно сделать и в какой форме ответить. Только JSON-массив объектов {"type","q","text","options","a","alt","why"}. ${used.map(k=>SPEC[k]).join('. ').replace('из 4–7 слов',`из ${Math.max(3,P.maxWords-2)}–${P.maxWords} слов`)}. "alt" — другие верные ответы (можно []), "why" — объяснение по-русски до 12 слов. Коротко, без переносов строк вне "text". Стиль 해요체. Перед ответом проверь каждое задание: ответ грамматически верен (받침!), перевод точно соответствует предложению. Никакого текста вне JSON.`;
 }
 // Ввод хангыля: IME собирает слог из чамо; Enter во время сборки не должен отправлять ответ
 function wireInput(el,onSubmit){
@@ -1632,6 +1672,19 @@ function wireInput(el,onSubmit){
   });
 }
 let order=null; // {tokens, used[], built[]}
+let picked=new Set(); // слова, отмеченные «не знаю» в текущем задании
+// «Не знаю слово»: корейские слова задания как кнопки; слово из списка 734 уходит в «учу», остальные — в личную базу с переводом от ИИ (≈60 токенов)
+function fillPick(it){ const box=document.getElementById('pick-box'); if(!box) return; const answered=session.results[session.idx]!==undefined;
+  const srcText=[it.text,it.q,...(Array.isArray(it.options)&&it.type!=='read'?it.options:[]),(answered||it.type==='order')?it.a:''].join(' ');
+  const toks=[...new Set(koTokens(srcText))]; if(!toks.length){ box.innerHTML='<span class="muted small">В задании пока нет корейских слов — после ответа появятся слова образца.</span>'; return; }
+  box.innerHTML=`<span class="muted small" style="width:100%">Нажмите слово, которого не знаете, — оно попадёт в «учу»${answered?'':' (после ответа добавятся слова образца)'}:</span>`+toks.map(t=>`<button class="chip ${picked.has(t)?'relearn':''}" data-tok="${esc(t)}">${esc(t)}</button>`).join('');
+  box.querySelectorAll('[data-tok]').forEach(b=>b.onclick=()=>markUnknownWord(b.dataset.tok,it.topic||(session.ach?'ach:'+session.ach.id:'calib'),b)); }
+async function markUnknownWord(tok,src,chip){ if(picked.has(tok)) return; picked.add(tok); chip.classList.add('relearn'); chip.disabled=true;
+  const m=matchVocab(tok);
+  if(m.length){ demoteWords([VOCAB[m[0]][0]],src); save(); toast(`«${VOCAB[m[0]][0]}» — ${VOCAB[m[0]][1]}: снова учу`); chip.disabled=false; return; }
+  let w=tok, ru='';
+  if(aiReady){ try{ const r=await sampleFn.json(`Корейское слово из предложения: «${tok}». Только JSON {"w":"словарная форма (глагол или прилагательное на -다, существительное без частицы)","ru":"перевод на русский, 1–3 слова"}.`,{kind:'word',max_tokens:60}); if(r&&r.w){ w=String(r.w); ru=String(r.ru||''); } }catch(e){} }
+  if(addExtraWord(w,ru,src)){ save(); toast(`«${w}»${ru?' — '+ru:''}: добавлено в слова на изучение`); } else toast('Не удалось разобрать слово'); chip.disabled=false; }
 function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function sceneArt(sc){ return `<div class="panel-art short">${art(sc.id)}<span class="caption"><span class="ko">${esc(sc.ko)}</span>${esc(sc.ru)}</span></div>`; }
 function renderTrain(){
@@ -1641,9 +1694,10 @@ function renderTrain(){
   if(session.error){ v.innerHTML=`<div class="panel"><div class="eyebrow">Тренировка</div><p class="notice" style="margin-top:10px">${session.error==='noai'?'Ключ Anthropic API не добавлен, поэтому задания не генерируются. Введите ключ на главной.':esc(session.error)}</p><div class="row" style="margin-top:14px"><button class="btn primary" id="retry">Попробовать снова</button><button class="btn" id="cancel">Назад</button></div></div>`; document.getElementById('retry').onclick=async()=>{ await boot(); if(session.mode==='calib') startCalib(); else if(session.mode==='ach') startAchTest(session.ach.id); else startSession(session.topics); }; document.getElementById('cancel').onclick=()=>{ session=null; show('home'); }; return; }
   if(session.idx>=session.items.length){ if(session.mode==='calib') renderCalibResult(); else if(session.mode==='ach') renderAchResult(); else renderSummary(); return; }
   const it=session.items[session.idx], t=byId[it.topic]||session.topics[0], sk=SKILL_OF[it.type], sc=session.scene;
-  order=null;
+  order=null; picked=new Set();
   const koContent=['mc','fill','fix','read','dialog'].includes(it.type);
-  let body='';
+  let body=`<p class="muted small" style="margin:8px 0 0">${esc(TASK_HINT[it.type]||'')}</p>`;
+  if(t&&session.mode==='train') body+=`<details class="method" style="border:0;margin:6px 0 0;padding:0"><summary>Правило темы: <span class="ko">${esc(t.t)}</span></summary><p class="small" style="margin:6px 0">${esc(t.ex)}</p><div class="formula">${esc(t.f)}</div><ul class="examples small" style="margin-top:6px">${t.e.slice(0,3).map(([k,r])=>`<li><span class="k">${esc(k)}</span><span class="r">${esc(r)}</span></li>`).join('')}</ul></details>`;
   if(it.type==='read'||it.type==='dialog') body+=`<div class="reading ${it.type}">${esc(it.text)}</div><div class="task">${esc(it.q||'Допишите последнюю реплику.')}</div>`;
   else body+=`${it.text?`<div class="task muted small">${esc(it.text)}</div>`:''}<div class="bubble ${['mc','fill','fix'].includes(it.type)?'ko':''}">${esc(it.q)}</div>`;
   if(koContent&&!it.cal&&!it.nogloss) body+=`<div class="tools"><button class="btn small yellow" id="gloss-q" ${aiReady?'':'disabled'}>Дословно</button></div><div class="gloss" id="gloss-q-box"></div>`;
@@ -1656,6 +1710,7 @@ function renderTrain(){
     ${sceneArt(sc)}
     <div class="ex-head"><div class="row" style="gap:8px">${headChip}</div><div class="progress-dots">${session.items.map((_,i)=>`<i class="${i<session.idx?(session.results[i]?'ok':'bad'):(i===session.idx?'cur':'')}"></i>`).join('')}</div></div>
     ${body}
+    <div class="tools"><button class="btn small ghost" id="pick-word">Не знаю слово…</button><button class="btn small ghost" id="task-help" ${aiReady?'':'disabled'}>Не понял задание</button></div><div class="wordchips hidden" id="pick-box"></div><div class="ai-box" id="task-help-box"></div>
     <div id="fb"></div>
     <div class="row" style="margin-top:16px;justify-content:space-between"><button class="btn ghost" id="skip">Не знаю, показать ответ</button><button class="btn ghost" id="quit">Завершить</button></div>
   </div>`;
@@ -1666,6 +1721,8 @@ function renderTrain(){
     document.querySelectorAll('#tokens .tok').forEach(b=>b.onclick=()=>{ const i=+b.dataset.i; if(order.used[i]) return; order.used[i]=true; order.built.push(i); draw(); });
     document.getElementById('reset-order').onclick=()=>{ order.used=order.used.map(()=>false); order.built=[]; draw(); };
     document.getElementById('check-order').onclick=()=>{ if(order.built.length) checkAnswer(order.built.map(i=>order.tokens[i]).join(' ')); }; }
+  document.getElementById('task-help').onclick=()=>aiText(`Объясни русскоязычному ученику уровня ${genParams().label}, что именно нужно сделать в этом задании и как к нему подойти, НЕ называя ответ и не подсказывая конкретное слово или окончание. Тип задания: ${TYPE_NAME[it.type]}. ${t?`Тема: ${t.t} (${t.n}), правило: ${t.f}.`:''} Задание: ${it.text?it.text+' / ':''}${it.q||''}${Array.isArray(it.options)?' Варианты: '+it.options.join(' / '):''}. До 60 слов, без markdown.`,'task-help-box',['task-help'],220,'help');
+  document.getElementById('pick-word').onclick=()=>{ const box=document.getElementById('pick-box'); box.classList.toggle('hidden'); if(!box.classList.contains('hidden')) fillPick(it); };
   document.getElementById('skip').onclick=()=>finishItem(false,'Ответ показан. Тема останется в повторении.',it);
   document.getElementById('quit').onclick=()=>{ session.items=session.items.slice(0,session.idx); renderTrain(); };
 }
@@ -1680,7 +1737,7 @@ async function checkAnswer(val){
     fb.innerHTML='<div class="check neutral"><div class="head"><span>Проверка</span></div><div class="body"><div class="loader"><i></i><span>Читаю ваш ответ…</span></div></div></div>';
     lockInputs();
     try{
-      const r=await sampleFn.json(`Проверь ответ ученика по корейскому. ${ctx} Задание: ${it.text?it.text+' / ':''}${it.q}. Образец: ${it.a}. Ответ ученика: ${val}. Верно, если грамматика темы и смысл правильные, даже при других словах или разговорном опускании частиц; для свободного письма верно, если нет грубых ошибок и грамматика темы использована. Ответь только JSON {"ok":true|false,"mistake":"если неверно: в чём ИМЕННО ошибка ученика, 1–2 коротких очень понятных предложения по-русски с указанием неверного слова или окончания; если верно — пустая строка","fb":"1 предложение: что хорошо или что улучшить","fix":"исправленный вариант ответа ученика по-корейски или пустая строка","words":["словарные формы (глаголы и прилагательные на -다) слов, которые ученик не знал, перепутал или написал с ошибкой, до 3; пустой массив, если ошибка только в частице или окончании"]}.`,{kind:'check',max_tokens:340});
+      const r=await sampleFn.json(`Проверь ответ ученика по корейскому. ${ctx} Задание: ${it.text?it.text+' / ':''}${it.q}. Образец: ${it.a}. Ответ ученика: ${val}. Верно, если грамматика темы и смысл правильные, даже при других словах или разговорном опускании частиц; для свободного письма верно, если нет грубых ошибок и грамматика темы использована. Ответь только JSON {"ok":true|false,"mistake":"если неверно: в чём ИМЕННО ошибка ученика, 1–2 коротких очень понятных предложения по-русски с указанием неверного слова или окончания; если верно — пустая строка","fb":"1 предложение: что хорошо или что улучшить","fix":"исправленный вариант ответа ученика по-корейски или пустая строка","words":[{"w":"словарная форма слова (глаголы и прилагательные на -다), которое ученик не знал, перепутал или написал с ошибкой","ru":"перевод"}]} — words до 3 элементов, пустой массив, если ошибка только в частице или окончании.`,{kind:'check',max_tokens:340});
       ok=!!(r&&r.ok); finishItem(ok,r&&r.fb?String(r.fb):'',it,val,r&&r.fix?String(r.fix):'',r&&r.mistake?String(r.mistake):'',r&&r.words); return;
     }catch(e){ checkFailed(it,val,e); return; }
   }
@@ -1689,7 +1746,7 @@ async function checkAnswer(val){
     fb.innerHTML='<div class="check neutral"><div class="head"><span>Разбор ошибки</span></div><div class="body"><div class="loader"><i></i><span>Смотрю, в чём ошибка…</span></div></div></div>';
     lockInputs();
     let mistake='', words=null;
-    try{ const r=await sampleFn.json(`Ученик ошибся. ${ctx} Задание: ${it.text?it.text+' / ':''}${it.q}. Правильный ответ: ${it.a}. Ответ ученика: ${val}. Объясни по-русски очень просто и коротко (1–2 предложения, до 35 слов), почему ответ ученика неверен и почему верен правильный: назови конкретное слово, частицу или окончание. Только JSON {"mistake":"...","words":["словарные формы слов, которых ученик не знал или перепутал, до 3; пустой массив, если дело в частице или окончании"]}.`,{kind:'check',max_tokens:240}); mistake=r&&r.mistake?String(r.mistake):''; words=r&&r.words; }catch(e){}
+    try{ const r=await sampleFn.json(`Ученик ошибся. ${ctx} Задание: ${it.text?it.text+' / ':''}${it.q}. Правильный ответ: ${it.a}. Ответ ученика: ${val}. Объясни по-русски очень просто и коротко (1–2 предложения, до 35 слов), почему ответ ученика неверен и почему верен правильный: назови конкретное слово, частицу или окончание. Только JSON {"mistake":"...","words":[{"w":"словарная форма слова, которого ученик не знал или перепутал","ru":"перевод"}]} — words до 3 элементов, пустой массив, если дело в частице или окончании.`,{kind:'check',max_tokens:240}); mistake=r&&r.mistake?String(r.mistake):''; words=r&&r.words; }catch(e){}
     finishItem(false,'',it,val,'',mistake,words); return;
   }
   finishItem(ok,'',it,val);
@@ -1708,7 +1765,7 @@ function checkFailed(it,val,e){
 function lockInputs(){ document.querySelectorAll('#view-train .opt, #view-train .tok, #view-train #check, #view-train #check-order, #view-train #reset-order, #view-train #inp, #skip').forEach(x=>x.disabled=true); }
 function finishItem(ok,note,it,val,fix,mistake,words){
   lockInputs();
-  const sk=SKILL_OF[it.type], sc=session.scene; let back=[];
+  const sk=SKILL_OF[it.type], sc=session.scene; let back={hit:[],extra:[]};
   document.querySelectorAll('#view-train .opt').forEach(b=>{ const txt=it.options[+b.dataset.i]; if(norm(txt)===norm(it.a)) b.classList.add('right'); else if(val!==undefined&&norm(txt)===norm(val)&&!ok) b.classList.add('wrong'); });
   session.results[session.idx]=ok;
   if(session.mode==='calib'){ it.ok=ok; }
@@ -1730,9 +1787,11 @@ function finishItem(ok,note,it,val,fix,mistake,words){
     ${mistake?`<div class="mistake"><b>В чём ошибка</b>${esc(mistake)}</div>`:''}
     ${fix&&norm(fix)!==norm(val)?`<p class="quote">Ваш вариант с правкой: <span class="ko">${esc(fix)}</span></p>`:''}
     ${note?`<p class="why">${esc(note)}</p>`:''}${it.why&&!mistake?`<p class="why">${esc(it.why)}</p>`:''}
-    ${back.length?`<p class="why"><b>Снова учу:</b> ${back.map(i=>`<span class="ko">${esc(VOCAB[i][0])}</span>`).join(', ')} — ${back.length>1?'эти слова больше не считаются знакомыми, пока вы не подтвердите их в карточках':'это слово больше не считается знакомым, пока вы не подтвердите его в карточках'}.</p>`:''}</div></div>
+    ${back.extra.length?`<p class="why"><b>В слова на изучение:</b> ${back.extra.map(w=>`<span class="ko">${esc(w)}</span>${state.extra[w]&&state.extra[w].ru?' — '+esc(state.extra[w].ru):''}`).join(', ')}.</p>`:''}
+    ${back.hit.length?`<p class="why"><b>Снова учу:</b> ${back.hit.map(i=>`<span class="ko">${esc(VOCAB[i][0])}</span>`).join(', ')} — ${back.hit.length>1?'эти слова больше не считаются знакомыми, пока вы не подтвердите их в карточках':'это слово больше не считается знакомым, пока вы не подтвердите его в карточках'}.</p>`:''}</div></div>
     <div class="row" style="margin-top:12px;justify-content:space-between"><button class="btn primary" id="next">${session.idx+1<session.items.length?'Дальше':'Итоги'}</button>${session.mode!=='train'?'':`<span class="row" style="gap:6px"><button class="btn small" id="hard">Мне сложно</button><button class="btn small" id="easy">Мне легко</button></span>`}</div>`;
   const nb=document.getElementById('next'); nb.focus(); nb.onclick=()=>{ session.idx++; renderTrain(); };
+  const pb=document.getElementById('pick-box'); if(pb&&!pb.classList.contains('hidden')) fillPick(it);
   const ga=document.getElementById('gloss-a'); if(ga) ga.onclick=()=>gloss(it.a,'gloss-a-box','gloss-a');
   const hard=document.getElementById('hard'), easy=document.getElementById('easy');
   if(hard) hard.onclick=()=>{ adjustOffset(-0.25,'hard'); toast('Понял: следующие задания будут проще (поправка '+state.level.offset.toFixed(2)+')'); hard.disabled=easy.disabled=true; };
@@ -1814,12 +1873,12 @@ function tierFilter(i){ return !vocabTier||WORD_TIER[VOCAB[i][2]]===vocabTier; }
 // слова, вернувшиеся в «учу» после ошибок, идут в карточках первыми
 function dueWords(){ const now=Date.now(); return VOCAB.map((_,i)=>i).filter(i=>tierFilter(i)&&!(state.vocab[i]&&state.vocab[i].k===true&&(state.vocab[i].d||0)>now)).filter(i=>{ const v=state.vocab[i]; return !v||(v.d||0)<=now; }).sort((a,b)=>((state.vocab[b]||{}).x||0)-((state.vocab[a]||{}).x||0)); }
 function renderVocab(){
-  const v=document.getElementById('view-vocab'); const vr=vocabRating(); const due=dueWords(); const rl=relearnWords();
-  const header=`<div class="panel flat" style="display:grid;gap:10px"><div class="row" style="justify-content:space-between"><div><div class="eyebrow">Словарь до B1</div><p class="muted small" style="margin:4px 0 0">Знакомо ${vr.known} из ${vr.total} · к повторению сейчас: <b>${due.length}</b>${rl.length?` · снова учу после ошибок: <b>${rl.length}</b>`:''}</p></div>
-    <div class="filters"><button class="btn small" data-mode="cards" aria-pressed="${vocabMode==='cards'}">Карточки</button><button class="btn small" data-mode="quick" aria-pressed="${vocabMode==='quick'}">Быстрая проверка</button><button class="btn small" data-mode="list" aria-pressed="${vocabMode==='list'}">Список</button>${rl.length?`<button class="btn small" data-mode="relearn" aria-pressed="${vocabMode==='relearn'}">Учу · ${rl.length}</button>`:''}</div></div>
+  const v=document.getElementById('view-vocab'); const vr=vocabRating(); const due=dueWords(); const rl=relearnWords(), ex=extraLearning(), rlN=rl.length+ex.length;
+  const header=`<div class="panel flat" style="display:grid;gap:10px"><div class="row" style="justify-content:space-between"><div><div class="eyebrow">Словарь до B1</div><p class="muted small" style="margin:4px 0 0">Знакомо ${vr.known} из ${vr.total} · к повторению сейчас: <b>${due.length}</b>${rlN?` · снова учу после ошибок: <b>${rlN}</b>`:''}</p></div>
+    <div class="filters"><button class="btn small" data-mode="cards" aria-pressed="${vocabMode==='cards'}">Карточки</button><button class="btn small" data-mode="quick" aria-pressed="${vocabMode==='quick'}">Быстрая проверка</button><button class="btn small" data-mode="list" aria-pressed="${vocabMode==='list'}">Список</button>${rlN?`<button class="btn small" data-mode="relearn" aria-pressed="${vocabMode==='relearn'}">Учу · ${rlN}</button>`:''}</div></div>
     <div class="filters"><button class="btn small" data-tier="0" aria-pressed="${vocabTier===0}">Все уровни</button>${KLI.map(k=>`<button class="btn small" data-tier="${k.g}" aria-pressed="${vocabTier===k.g}">${k.name} · ${k.cefr} · ${vr.tiers[k.g-1].known}/${vr.tiers[k.g-1].n}</button>`).join('')}</div></div>`;
   let body='';
-  if(vocabMode==='list'||vocabMode==='relearn'){ const only=vocabMode==='relearn'; body=`${only?`<p class="notice">Эти слова были отмечены «знаю», но в заданиях вы на них ошиблись. Они временно не считаются знакомыми и идут в карточках первыми; «Помню» три раза подряд или галочка в списке возвращают их в знакомые.</p>`:''}<div class="vocab-list">${VOCAB.map(([k,r,lv],i)=>({k,r,lv,i})).filter(x=>tierFilter(x.i)&&(!only||rl.includes(x.i))).map(({k,r,lv,i})=>{ const b=state.vocab[i]?.b||0; const kn=wordKnown(i); const rel=!kn&&(state.vocab[i]||{}).x>0; return `<div><span><span class="ko">${esc(k)}</span> <span class="chip" style="font-size:9px;padding:1px 6px">${lv}</span>${rel?` <span class="chip relearn" style="font-size:9px;padding:1px 6px" title="Ошибок в заданиях: ${state.vocab[i].x}">учу</span>`:''}</span><span class="muted" style="text-align:right;display:flex;align-items:center;gap:8px"><span>${esc(r)}<span class="box-dots">${[1,2,3,4,5].map(x=>`<i class="${b>=x?'on':''}"></i>`).join('')}</span></span><button class="mark ${kn?'on':''}" data-i="${i}" title="${kn?'Знакомо':'Отметить как знакомое'}">✓</button></span></div>`; }).join('')}</div>`; }
+  if(vocabMode==='list'||vocabMode==='relearn'){ const only=vocabMode==='relearn'; body=`${only?`<p class="notice">Эти слова были отмечены «знаю», но в заданиях вы на них ошиблись. Они временно не считаются знакомыми и идут в карточках первыми; «Помню» три раза подряд или галочка в списке возвращают их в знакомые.</p>${ex.length?`<div class="panel flat" style="margin-bottom:12px"><div class="eyebrow ink">Мои слова вне списка · ${ex.length}</div><p class="muted small" style="margin:4px 0 8px">Слова из заданий, которых нет среди 734 базовых. Они вставляются в новые задания; нажмите ✓, когда выучите.</p><div class="vocab-list">${ex.map(w=>`<div><span><span class="ko">${esc(w)}</span></span><span class="muted" style="display:flex;align-items:center;gap:8px"><span>${esc(state.extra[w].ru||'—')}</span><button class="mark" data-x="${esc(w)}" title="Выучил">✓</button></span></div>`).join('')}</div></div>`:''}`:''}<div class="vocab-list">${VOCAB.map(([k,r,lv],i)=>({k,r,lv,i})).filter(x=>tierFilter(x.i)&&(!only||rl.includes(x.i))).map(({k,r,lv,i})=>{ const b=state.vocab[i]?.b||0; const kn=wordKnown(i); const rel=!kn&&(state.vocab[i]||{}).x>0; return `<div><span><span class="ko">${esc(k)}</span> <span class="chip" style="font-size:9px;padding:1px 6px">${lv}</span>${rel?` <span class="chip relearn" style="font-size:9px;padding:1px 6px" title="Ошибок в заданиях: ${state.vocab[i].x}">учу</span>`:''}</span><span class="muted" style="text-align:right;display:flex;align-items:center;gap:8px"><span>${esc(r)}<span class="box-dots">${[1,2,3,4,5].map(x=>`<i class="${b>=x?'on':''}"></i>`).join('')}</span></span><button class="mark ${kn?'on':''}" data-i="${i}" title="${kn?'Знакомо':'Отметить как знакомое'}">✓</button></span></div>`; }).join('')}</div>`; }
   else if(vocabMode==='quick'){ const pool=VOCAB.map((_,i)=>i).filter(i=>tierFilter(i)&&!(state.vocab[i]&&state.vocab[i].k!==undefined)); if(!pool.length) body=`<div class="panel"><h2 style="font-size:22px">Все слова этого уровня уже проверены</h2><p class="muted" style="margin:6px 0 0">Отметки можно изменить в списке.</p></div>`; else { const i=pool[hashStr(String(pool.length)+today())%pool.length]; const [k,r,lv]=VOCAB[i]; body=`<div class="panel quick"><span class="chip">${lv} · осталось ${pool.length}</span><span class="w">${esc(k)}</span><p class="muted" style="margin:0">Знаете перевод? Отвечайте честно — от этого зависит подбор заданий.</p><div class="row" style="justify-content:center"><button class="btn" id="q-no" style="color:var(--bad)">Не знаю</button><button class="btn teal" id="q-show">Показать</button><button class="btn primary" id="q-yes">Знаю</button></div><p id="q-ans" class="ko" style="margin:0;font-size:18px;min-height:1.5em"></p></div>`; setTimeout(()=>{ const yes=document.getElementById('q-yes'), no=document.getElementById('q-no'), sh=document.getElementById('q-show'); const mark=kn=>{ const cur=state.vocab[i]||{b:0,d:0}; state.vocab[i]=kn?{...cur,k:true,b:Math.max(cur.b||0,3),d:Date.now()+7*864e5}:{...cur,k:false,b:0,d:Date.now()}; save(); renderVocab(); }; if(yes) yes.onclick=()=>mark(true); if(no) no.onclick=()=>mark(false); if(sh) sh.onclick=()=>{ document.getElementById('q-ans').textContent=r; }; },0); } }
   else if(!due.length){ body=`<div class="panel"><h2 style="font-size:24px">На сегодня всё повторено</h2><p class="muted" style="margin:6px 0 0">Следующие карточки появятся по расписанию интервального повторения. Загляните в «Быструю проверку», чтобы отметить знакомые слова.</p></div>`; }
   else { const i=due[0], [k,r,lv]=VOCAB[i]; body=`
@@ -1829,7 +1888,8 @@ function renderVocab(){
   v.innerHTML=header+body;
   v.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{ vocabMode=b.dataset.mode; flip=false; renderVocab(); });
   v.querySelectorAll('[data-tier]').forEach(b=>b.onclick=()=>{ vocabTier=+b.dataset.tier; flip=false; renderVocab(); });
-  v.querySelectorAll('.mark').forEach(b=>b.onclick=()=>{ const i=+b.dataset.i; const cur=state.vocab[i]||{b:0,d:0}; const kn=wordKnown(i); state.vocab[i]=kn?{...cur,k:false,b:0,d:Date.now()}:{...cur,k:true,b:Math.max(cur.b||0,3),d:Date.now()+7*864e5}; save(); renderVocab(); });
+  v.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{ state.extra[b.dataset.x].k=true; save(); renderVocab(); });
+  v.querySelectorAll('.mark[data-i]').forEach(b=>b.onclick=()=>{ const i=+b.dataset.i; const cur=state.vocab[i]||{b:0,d:0}; const kn=wordKnown(i); state.vocab[i]=kn?{...cur,k:false,b:0,d:Date.now()}:{...cur,k:true,b:Math.max(cur.b||0,3),d:Date.now()+7*864e5}; save(); renderVocab(); });
   if(vocabMode==='cards'&&due.length){ const i=due[0], [k,r]=VOCAB[i];
     const doFlip=()=>{ flip=true; renderVocab(); };
     document.getElementById('flash').onclick=doFlip; const rv=document.getElementById('reveal'); if(rv) rv.onclick=doFlip;

@@ -16,6 +16,13 @@ CREATE TABLE IF NOT EXISTS progress (
   data TEXT NOT NULL,
   updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
+-- Снимки прогресса перед перезаписью (не чаще раза в час, хранятся последние 60) — защита от потери данных
+CREATE TABLE IF NOT EXISTS progress_backup (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  data TEXT NOT NULL,
+  updated_at TEXT,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+);
 -- Каждый ответ на упражнение
 CREATE TABLE IF NOT EXISTS attempts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
