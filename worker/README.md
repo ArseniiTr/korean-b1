@@ -14,6 +14,8 @@
 
 Ключ Anthropic можно хранить и секретом воркера (`npx wrangler secret put ANTHROPIC_API_KEY`) — тогда он имеет приоритет над `app_config`.
 
+Запросы к Anthropic уходят не из самого воркера, а из Durable Object `AiRelay`, закреплённого в США (`locationHint: "enam"`, объявлен в `wrangler.toml`). Причина: воркер выполняется в ближайшем к ученику узле Cloudflare, и при перегрузке узла запрос может уйти через соседний регион (например, Гонконг), откуда Anthropic отвечает `403 {"type":"forbidden","message":"Request not allowed"}`. Если объект недоступен или сам получил 403, воркер делает прямой вызов. Durable Objects на SQLite-хранилище входят в бесплатный тариф.
+
 ## Первый деплой (делает владелец аккаунта Cloudflare)
 Нужен Node.js (есть в Homebrew: `brew install node`). Все команды — из папки `worker`.
 

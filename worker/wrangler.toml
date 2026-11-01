@@ -12,3 +12,13 @@ binding = "DB"
 database_name = "korean-b1"
 # database_id выдаёт команда `npx wrangler d1 create korean-b1` — вставить сюда.
 database_id = "9b736576-bdf6-42aa-9282-dd21df5d0699"
+
+# Запросы к Anthropic уходят из Durable Object, закреплённого в США (locationHint в src/index.ts):
+# иначе из перегруженного азиатского узла Cloudflare Anthropic отвечает 403 «Request not allowed».
+# Бесплатный план: объекты на SQLite-хранилище.
+[durable_objects]
+bindings = [{ name = "AI_RELAY", class_name = "AiRelay" }]
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["AiRelay"]

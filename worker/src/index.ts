@@ -8,6 +8,8 @@ export interface Env {
   // Необязательный секрет (`wrangler secret put ANTHROPIC_API_KEY`); иначе ключ берётся из app_config,
   // куда его один раз вводит сам пользователь в приложении (действие set_key).
   ANTHROPIC_API_KEY?: string;
+  // Durable Object, закреплённый в США: через него уходят запросы к Anthropic (см. AiRelay)
+  AI_RELAY?: DurableObjectNamespace;
 }
 
 const MODEL = "claude-haiku-5-5"; // самая экономичная модель, по просьбе пользователя
@@ -90,9 +92,38 @@ async function logCall(db: D1Database, kind: string, res: Anthropic.Message): Pr
     .run();
 }
 
-async function callAi(env: Env, body: Record<string, unknown>): Promise<Response> {
+// Anthropic отвечает 403 {"type":"forbidden","message":"Request not allowed"}, если запрос пришёл из неподдерживаемого
+// региона. Воркер выполняется в ближайшем к пользователю узле Cloudflare, и при перегрузке узла запрос может уйти
+// через соседний (например, Гонконг). Поэтому вызов делаем из Durable Object, закреплённого в США (locationHint),
+// а прямой вызов оставляем запасным, если объект недоступен.
+const RELAY_HINT: DurableObjectLocationHint = "enam";
+async function callAi(env: Env, body: Record<string, unknown>, colo = ""): Promise<Response> {
   const apiKey = await getApiKey(env);
   if (!apiKey) return json({ error: "no_api_key" }, 503);
+  if (env.AI_RELAY) {
+    try {
+      const stub = env.AI_RELAY.get(env.AI_RELAY.idFromName("anthropic-us"), { locationHint: RELAY_HINT });
+      const r = await stub.fetch("https://relay/ai", { method: "POST", body: JSON.stringify({ apiKey, body, colo }) });
+      // 403 forbidden из США быть не должно; если всё же пришёл, пробуем напрямую
+      const err = r.status === 502 ? ((await r.clone().json().catch(() => ({}))) as { status?: number }) : {};
+      if (err.status !== 403) return r;
+      console.error("relay_forbidden", colo);
+    } catch (e) {
+      console.error("relay_error", colo, (e as Error).message);
+    }
+  }
+  return callAnthropic(env, apiKey, body, colo);
+}
+
+export class AiRelay implements DurableObject {
+  constructor(_state: DurableObjectState, private env: Env) {}
+  async fetch(req: Request): Promise<Response> {
+    const { apiKey, body, colo } = (await req.json()) as { apiKey: string; body: Record<string, unknown>; colo?: string };
+    return callAnthropic(this.env, apiKey, body, colo ?? "");
+  }
+}
+
+async function callAnthropic(env: Env, apiKey: string, body: Record<string, unknown>, colo: string): Promise<Response> {
   // Перегрузка или обрыв на стороне Anthropic: SDK сам повторяет 429/5xx, даём ему до 4 попыток и 60 с на запрос
   const client = new Anthropic({ apiKey, maxRetries: 4, timeout: 60_000 });
   const prompt = String(body.prompt ?? "").slice(0, 12000);
@@ -121,7 +152,7 @@ async function callAi(env: Env, body: Record<string, unknown>): Promise<Response
     if (e instanceof Anthropic.AuthenticationError) return json({ error: "bad_api_key" }, 503);
     if (e instanceof Anthropic.RateLimitError) return json({ error: "rate_limited" }, 429);
     if (e instanceof Anthropic.APIError) {
-      console.error("anthropic_error", String(body.kind ?? ""), e.status, e.message);
+      console.error("anthropic_error", String(body.kind ?? ""), e.status, e.message, "colo", colo);
       return json({ error: "api_error", detail: e.message, status: e.status }, 502);
     }
     throw e;
@@ -263,7 +294,7 @@ export default {
         let data: unknown = null; try { data = JSON.parse(row.data); } catch { data = null; }
         return json({ data });
       }
-      if (action === "ai") return await callAi(env, body);
+      if (action === "ai") return await callAi(env, body, String((req.cf as { colo?: string } | undefined)?.colo ?? ""));
       if (action === "stats") return await stats(db);
       return json({ error: "unknown_action" }, 400);
     } catch (e) {
