@@ -1,0 +1,14 @@
+# Cloudflare Worker учебника «Корейский до B1». Деплой: `npm run deploy` из папки worker.
+name = "korean-b1-tutor"
+main = "src/index.ts"
+compatibility_date = "2026-06-01"
+compatibility_flags = ["nodejs_compat"]
+
+[observability]
+enabled = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "korean-b1"
+# database_id выдаёт команда `npx wrangler d1 create korean-b1` — вставить сюда.
+database_id = "PASTE_DATABASE_ID_HERE"

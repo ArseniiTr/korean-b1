@@ -1,0 +1,5 @@
+node_modules/
+.wrangler/
+.dev.vars
+# выгрузка данных из Supabase: содержит хеш PIN, токены сессий и ключ Anthropic — не коммитить
+migration/data.sql
