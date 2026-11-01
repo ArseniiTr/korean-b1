@@ -1630,6 +1630,21 @@ function validItem(x){
   if(x.type==='order'&&String(x.a).trim().split(/\s+/).length<3) x.type='translate';
   return true;
 }
+// Ключ ответа по правилу 받침: ИИ иногда путает 이에요/예요, 은/는, 이/가 и т.п. Для подстановок считаем верную форму
+// по последнему слогу слова перед ___ и правим ключ; если верной формы нет среди вариантов, задание отбрасываем.
+const ALLO=[['이에요','예요'],['은','는'],['이','가'],['을','를'],['과','와'],['이랑','랑'],['으로','로'],['이나','나'],['이라고','라고'],['이라서','라서'],['이면','면']];
+function batchimFix(x){
+  if(!['mc','fill'].includes(x.type)) return x;
+  const m=/([\uAC00-\uD7A3]+)\s?_{2,}/.exec(String(x.q||'')); if(!m) return x;
+  const w=m[1], j=jamo(w.slice(-1)); if(!j) return x;
+  if(!LEMMA_IDX.ex.has(w)&&LEMMA_IDX.verbs.some(v=>v.stem===w||(v.parts.length===1&&stemMatch(v.stem,w)))) return x; // перед пропуском основа глагола (먹___ 사람), а не существительное — правило частиц не про неё
+  const a=String(x.a).trim(), a0=a.replace(/[.?!…]+$/,''); const pair=ALLO.find(p=>p.includes(a0)); if(!pair) return x;
+  const bat=j[2]!==''&&!(pair[0]==='으로'&&j[2]==='ㄹ'); const right=bat?pair[0]:pair[1];
+  if(right===a0) return x;
+  if(x.type==='mc'){ const opt=x.options.find(o=>String(o).trim().replace(/[.?!…]+$/,'')===right); if(!opt) return null; x.a=opt; }
+  else x.a=right+a.slice(a0.length);
+  x.alt=(Array.isArray(x.alt)?x.alt:[]).filter(v=>norm(v)!==norm(a)); x.keyfix=1; return x;
+}
 // Экономия и надёжность: по 2–3 задания на запрос, обрезанный JSON спасаем по целым объектам
 function chunk(arr,n){ const o=[]; for(let i=0;i<arr.length;i+=n) o.push(arr.slice(i,i+n)); return o; }
 function salvage(text){ const out=[]; const t=String(text||''); let i=t.indexOf('{'); while(i>=0&&i<t.length){ let depth=0,inStr=false,escp=false,j=i; for(;j<t.length;j++){ const c=t[j]; if(inStr){ if(escp) escp=false; else if(c==='\\') escp=true; else if(c==='"') inStr=false; continue; } if(c==='"') inStr=true; else if(c==='{') depth++; else if(c==='}'){ depth--; if(depth===0){ try{ out.push(JSON.parse(t.slice(i,j+1))); }catch(x){} break; } } } if(j>=t.length) break; i=t.indexOf('{',j+1); } return out; }
@@ -1642,7 +1657,7 @@ async function generate(){
   const plan=planTypes(session.topics);
   const jobs=[]; session.topics.forEach((t,i)=>chunk(plan[i],3).forEach(c=>jobs.push({t,types:c})));
   try{
-    const res=await Promise.all(jobs.map(j=>genChunk(buildPrompt(j.t,j.types,session.scene)).then(arr=>arr.filter(validItem).map(x=>({...x,topic:j.t.id})))));
+    const res=await Promise.all(jobs.map(j=>genChunk(buildPrompt(j.t,j.types,session.scene)).then(arr=>arr.filter(validItem).map(batchimFix).filter(Boolean).map(x=>({...x,topic:j.t.id})))));
     const batches=session.topics.map(t=>res.filter((_,k)=>jobs[k].t===t).flat());
     let items=[]; const max=Math.max(...batches.map(b=>b.length)); for(let i=0;i<max;i++) batches.forEach(b=>{ if(b[i]) items.push(b[i]); });
     // слишком длинные для уровня предложения отбрасываем, если после этого остаётся хотя бы половина заданий
@@ -1673,7 +1688,7 @@ function buildPrompt(t,types,sc){
 Грамматика строго по программе: проверяй только «${t.t}»; остальное в предложениях строй из уже пройденного: ${allowed.join(', ')} — и самых базовых форм (존댓말 해요체, простые существительные). Не используй и не ставь в варианты ответов конструкции ещё не пройденных тем: ${banned.join(', ')}. Если по-русски перевод одинаков, а корейские формы разные (например 은/는 и 이/가, 이에요 и 있어요), не противопоставляй их в вариантах, пока вторая форма не пройдена; неверные варианты — ошибки внутри темы «${t.t}».
 Знакомые слова, используй в основном их: ${knownWords(24)}.${lw.length?` Слова, которые ученик сейчас учит, вставь по одному в разные задания: ${lw.join(', ')}.`:''}
 Составь ровно ${types.length} заданий, типы строго по порядку: ${types.join(', ')}.
-В "q" формулируй задание однозначно: что именно сделать и в какой форме ответить. Только JSON-массив объектов {"type","q","text","options","a","alt","why"}. ${used.map(k=>SPEC[k]).join('. ').replace('из 4–7 слов',`из ${Math.max(3,P.maxWords-2)}–${P.maxWords} слов`)}. "alt" — другие верные ответы (можно []), "why" — объяснение по-русски до 12 слов. Коротко, без переносов строк вне "text". Стиль 해요체. Перед ответом проверь каждое задание: ответ грамматически верен (받침!), перевод точно соответствует предложению. Никакого текста вне JSON.`;
+В "q" формулируй задание однозначно: что именно сделать и в какой форме ответить. Только JSON-массив объектов {"type","q","text","options","a","alt","why"}. ${used.map(k=>SPEC[k]).join('. ').replace('из 4–7 слов',`из ${Math.max(3,P.maxWords-2)}–${P.maxWords} слов`)}. "alt" — другие верные ответы (можно []), "why" — объяснение по-русски до 12 слов. Коротко, без переносов строк вне "text". Стиль 해요체. Перед ответом проверь каждое задание: для форм, зависящих от 받침 (이에요/예요, 은/는, 이/가, 을/를, 과/와, 이랑/랑, 으로/로), посмотри на последний слог слова перед пропуском: есть 받침 — верна первая форма пары (볼펜이에요, 책은), нет — вторая (의자예요, 사과는); перевод точно соответствует предложению. Никакого текста вне JSON.`;
 }
 // Ввод хангыля: IME собирает слог из чамо; Enter во время сборки не должен отправлять ответ
 function wireInput(el,onSubmit){
@@ -1779,9 +1794,12 @@ function checkFailed(it,val,e){
   document.getElementById('self-bad').onclick=()=>finishItem(false,'Отмечено как ошибка по вашей оценке.',it,val);
 }
 function lockInputs(){ document.querySelectorAll('#view-train .opt, #view-train .tok, #view-train #check, #view-train #check-order, #view-train #reset-order, #view-train #inp, #skip').forEach(x=>x.disabled=true); }
+const SNAP_KEYS=['topics','skills','vocab','extra','seen','errors','days','level','recent'];
 function finishItem(ok,note,it,val,fix,mistake,words){
   lockInputs();
   const sk=SKILL_OF[it.type], sc=session.scene; let back={hit:[],extra:[]};
+  // ключ задания может быть ошибочным (его составил ИИ): запоминаем состояние, чтобы кнопкой «Мой ответ верный» откатить ошибку и засчитать ответ
+  const snap=(!ok&&session.mode!=='calib'&&val!==undefined&&!it.disputed)?JSON.stringify(Object.fromEntries(SNAP_KEYS.map(k=>[k,state[k]]))):null;
   document.querySelectorAll('#view-train .opt').forEach(b=>{ const txt=it.options[+b.dataset.i]; if(norm(txt)===norm(it.a)) b.classList.add('right'); else if(val!==undefined&&norm(txt)===norm(val)&&!ok) b.classList.add('wrong'); });
   session.results[session.idx]=ok;
   if(session.mode==='calib'){ it.ok=ok; }
@@ -1805,8 +1823,9 @@ function finishItem(ok,note,it,val,fix,mistake,words){
     ${note?`<p class="why">${esc(note)}</p>`:''}${it.why&&!mistake?`<p class="why">${esc(it.why)}</p>`:''}
     ${back.extra.length?`<p class="why"><b>В слова на изучение:</b> ${back.extra.map(w=>`<span class="ko">${esc(w)}</span>${state.extra[w]&&state.extra[w].ru?' — '+esc(state.extra[w].ru):''}`).join(', ')}.</p>`:''}
     ${back.hit.length?`<p class="why"><b>Снова учу:</b> ${back.hit.map(i=>`<span class="ko">${esc(VOCAB[i][0])}</span>`).join(', ')} — ${back.hit.length>1?'эти слова больше не считаются знакомыми, пока вы не подтвердите их в карточках':'это слово больше не считается знакомым, пока вы не подтвердите его в карточках'}.</p>`:''}</div></div>
-    <div class="row" style="margin-top:12px;justify-content:space-between"><button class="btn primary" id="next">${session.idx+1<session.items.length?'Дальше':'Итоги'}</button>${session.mode!=='train'?'':`<span class="row" style="gap:6px"><button class="btn small" id="hard">Мне сложно</button><button class="btn small" id="easy">Мне легко</button></span>`}</div>`;
+    <div class="row" style="margin-top:12px;justify-content:space-between"><button class="btn primary" id="next">${session.idx+1<session.items.length?'Дальше':'Итоги'}</button><span class="row" style="gap:6px">${snap?`<button class="btn small" id="dispute" title="Если ключ задания ошибочный: ошибка отменится, ответ засчитается">Мой ответ верный</button>`:''}${session.mode!=='train'?'':`<button class="btn small" id="hard">Мне сложно</button><button class="btn small" id="easy">Мне легко</button>`}</span></div>`;
   const nb=document.getElementById('next'); nb.focus(); nb.onclick=()=>{ session.idx++; renderTrain(); };
+  const db=document.getElementById('dispute'); if(db) db.onclick=()=>{ Object.assign(state,JSON.parse(snap)); it.a=val; it.alt=[]; it.disputed=true; finishItem(true,'Засчитано как верный ответ: ключ задания был ошибочным, прогресс и слова восстановлены.',it,val); toast('Ответ засчитан как верный'); };
   const pb=document.getElementById('pick-box'); if(pb&&!pb.classList.contains('hidden')) fillPick(it);
   const ga=document.getElementById('gloss-a'); if(ga) ga.onclick=()=>gloss(it.a,'gloss-a-box','gloss-a');
   const hard=document.getElementById('hard'), easy=document.getElementById('easy');
