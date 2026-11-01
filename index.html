@@ -1139,7 +1139,7 @@ const KEY='korean-b1-progress';
 const today=()=>new Date().toISOString().slice(0,10);
 function fresh(){
   const s={v:4,updated:0,topics:{},vocab:{},errors:[],days:{},skills:{g:{n:0,c:0},r:{n:0,c:0},w:{n:0,c:0}},recent:{g:[],r:[],w:[]},scenes:{},
-    level:{cal:null,calAt:0,calN:0,offset:0,hist:[],profile:null},settings:{goal:10},ach:{},achKo:{},extra:{},explain:{}};
+    level:{cal:null,calAt:0,calN:0,offset:0,hist:[],profile:null},settings:{goal:10},ach:{},achKo:{},extra:{},explain:{},seen:{}};
   T.forEach(t=>{ if(t.k) s.topics[t.id]={s:0.6,n:0,c:0,t:0,r:'',p:0}; });
   return s;
 }
@@ -1148,7 +1148,7 @@ try{ const raw=localStorage.getItem(KEY); if(raw){ state=migrate(JSON.parse(raw)
 function migrate(s){ const f=fresh(); const m=migrateRaw(s,f); Object.values(m.topics).forEach(normTopic); return m; }
 // старый формат темы {s,n,c,t}: история последних ответов восстанавливается из счётчиков, ответы «своими словами» начинаются с нуля
 function normTopic(p){ if(typeof p.r!=='string'){ const n=Math.min(p.n||0,HIST_N), c=Math.min(n,Math.round(n*(p.c||0)/(p.n||1))); p.r='1'.repeat(c)+'0'.repeat(n-c); } if(typeof p.p!=='number') p.p=0; return p; }
-function migrateRaw(s,f){ return {...f,...s,topics:{...f.topics,...(s.topics||{})},vocab:s.vocab||{},errors:s.errors||[],days:s.days||{},skills:{...f.skills,...(s.skills||{})},recent:{...f.recent,...(s.recent||{})},scenes:s.scenes||{},level:{...f.level,...(s.level||{})},settings:{...f.settings,...(s.settings||{})},ach:s.ach||{},achKo:s.achKo||{},extra:s.extra||{},explain:s.explain||{}}; }
+function migrateRaw(s,f){ return {...f,...s,topics:{...f.topics,...(s.topics||{})},vocab:s.vocab||{},errors:s.errors||[],days:s.days||{},skills:{...f.skills,...(s.skills||{})},recent:{...f.recent,...(s.recent||{})},scenes:s.scenes||{},level:{...f.level,...(s.level||{})},settings:{...f.settings,...(s.settings||{})},ach:s.ach||{},achKo:s.achKo||{},extra:s.extra||{},explain:s.explain||{},seen:s.seen||{}}; }
 
 /* ============ СЕРВЕР: ВХОД, ПРОГРЕСС, ИИ ============ */
 const API='https://korean-b1-tutor.korean-b1-tutor.workers.dev';
@@ -1337,6 +1337,15 @@ function matchVocab(text){ const toks=koTokens(text), found=new Set();
   return [...found]; }
 // индекс слова по словарной форме от ИИ (точно; затем как словоформа)
 function vocabIndexOf(lemma){ const k=vkey(lemma).replace(/^[-~]/,''); if(!k) return -1; if(LEMMA_IDX.ex.has(k)) return LEMMA_IDX.ex.get(k); if(LEMMA_IDX.ex.has(k+'다')) return LEMMA_IDX.ex.get(k+'다'); if(LEMMA_IDX.ex.has(k+'하다')) return LEMMA_IDX.ex.get(k+'하다'); const m=matchVocab(k); return m.length===1?m[0]:-1; }
+
+/* ============ БАЗА ВЫПОЛНЕННЫХ УПРАЖНЕНИЙ ============
+   Каждое задание запоминается (state.seen[ключ] = {q, a, tp, ty, n, c, ok, t}). Задание, решённое верно в последний раз,
+   больше не выдаётся: ИИ получает список «уже умею», а совпадения по ответу всё равно отбрасываются. Ошибочные могут вернуться. */
+function seenKey(it){ return String(hashStr(norm(it.a)+'|'+norm(String(it.q||it.text||'').slice(0,60)))); }
+function recordSeen(it,ok,tp){ state.seen=state.seen||{}; const k=seenKey(it); const e=state.seen[k]||{q:String(it.q||it.text||'').slice(0,90),a:String(it.a).slice(0,90),tp:tp||'',ty:it.type,n:0,c:0}; e.n++; if(ok) e.c++; e.ok=!!ok; e.t=Date.now(); state.seen[k]=e;
+  const keys=Object.keys(state.seen); if(keys.length>800) keys.sort((a,b)=>state.seen[a].t-state.seen[b].t).slice(0,keys.length-800).forEach(x=>delete state.seen[x]); }
+function seenByTopic(id){ return Object.values(state.seen||{}).filter(e=>e.tp===id).sort((a,b)=>b.t-a.t); }
+function isRepeat(it){ const seen=state.seen||{}; const e=seen[seenKey(it)]; if(e&&e.ok) return true; const na=norm(it.a); return Object.values(seen).some(x=>x.ok&&x.tp===it.topic&&norm(x.a)===na); }
 
 /* ============ УМНАЯ КАЛИБРОВКА СЛОВАРЯ ============
    Если в задании (тренировка, чтение, письмо, ачивка) ученик ошибся на слове, отмеченном «знаю», ИИ называет его словарную форму,
@@ -1561,6 +1570,7 @@ function renderLesson(){
     <div class="row" style="justify-content:space-between"><div class="eyebrow ink">Критерии сдачи</div><span class="chip ${cls}">${lab}</span></div>
     <div class="skills crits">${st.crit.map(x=>`<div class="skill"><span class="nm">${x.ok?'✓ ':''}${esc(x.nm)}</span><span class="bar ${x.ok?'ok':''}"><i style="width:${Math.round(x.frac*100)}%"></i></span><span class="lv">${esc(x.txt)}</span></div>`).join('')}</div>
     ${wc?`<div class="wordchips">${wc.words.map(i=>`<button class="chip ${wordKnown(i)?'ok':((state.vocab[i]||{}).x?'relearn':'')}" data-w="${i}" title="${wordKnown(i)?'Знакомо — нажмите, если нет':'Нажмите, если знаете это слово'}">${esc(VOCAB[i][0])} · ${esc(VOCAB[i][1])}</button>`).join('')}</div>`:''}
+    ${(()=>{ const sb=seenByTopic(t.id); if(!sb.length) return ''; const okN=sb.filter(e=>e.ok).length; return `<details class="method" style="border:0;margin:0;padding:0"><summary>Выполненные задания по теме: ${sb.length}, из них верно ${okN} — они больше не повторяются</summary><ul class="errors" style="list-style:none;padding:0;margin:6px 0 0">${sb.slice(0,30).map(e=>`<li><span class="${e.ok?'crit':''}"><span class="${e.ok?'ok':'no'}">${e.ok?'✓':'✗'}</span></span> <span class="ko">${esc(e.a)}</span> <span class="muted small">· ${esc(TYPE_NAME[e.ty]||e.ty)}${e.q&&!/[ㄱ-힝]/.test(e.q)?' · '+esc(e.q):''}</span></li>`).join('')}</ul></details>`; })()}
     <p class="muted small" style="margin:0">${esc(critLeft(t))}${st.id==='new'?' Тема откроется в тренировке сама, когда начатых тем станет меньше трёх, или начните упражнения по ней прямо сейчас.':''}</p>
   </div>
   <div class="panel flat" style="display:grid;gap:16px">
@@ -1636,6 +1646,7 @@ async function generate(){
     const batches=session.topics.map(t=>res.filter((_,k)=>jobs[k].t===t).flat());
     let items=[]; const max=Math.max(...batches.map(b=>b.length)); for(let i=0;i<max;i++) batches.forEach(b=>{ if(b[i]) items.push(b[i]); });
     // слишком длинные для уровня предложения отбрасываем, если после этого остаётся хотя бы половина заданий
+    const fresh_=items.filter(x=>!isRepeat(x)); if(fresh_.length) items=fresh_; // уже решённые верно не повторяем
     const lim=genParams().maxWords+2; const tooLong=x=>['mc','fill','fix','order','translate','dialog'].includes(x.type)&&Math.max(koTokens(x.q||'').length,koTokens(x.a||'').length)>lim; const short=items.filter(x=>!tooLong(x)); if(short.length>=Math.min(4,items.length)) items=short;
     if(!items.length) throw {code:'invalid_json'};
     session.items=items.slice(0,8); session.loading=false;
@@ -1652,8 +1663,8 @@ const SPEC={
  write:'write: "q" задание по-русски: ситуация из сцены и просьба написать 2–3 предложения по-корейски с этой грамматикой, "a" образец ответа',
  dialog:'dialog: "text" диалог из 3–4 реплик (가:/나:) про сцену, последняя реплика заменена на ___, "q" подсказка по-русски, что сказать, "a" образец реплики'};
 function buildPrompt(t,types,sc){
-  const used=[...new Set(types)]; const P=genParams(); const lw=learningWordsList(5);
-  return `Преподаватель корейского для русскоязычного взрослого, живущего в Корее. Уровень ученика по шкале 한국어학당: ${P.label} — лексика только уровней до ${P.tier}급, предложения не длиннее ${P.maxWords} слов, текст для чтения ${P.readSent} предложений.${P.tier===1?` Уровень начальный: каждое предложение очень короткое и простое, 3–${P.maxWords} слов, одна грамматическая конструкция, без придаточных, только самые частые слова.`:''} Тема: «${t.t}» (${t.n}). Правило: ${t.f}. Примеры: ${t.e.slice(0,3).map(e=>e[0]).join('; ')}.
+  const used=[...new Set(types)]; const P=genParams(); const lw=learningWordsList(5); const done=seenByTopic(t.id).filter(e=>e.ok).slice(0,12).map(e=>e.a);
+  return `Преподаватель корейского для русскоязычного взрослого, живущего в Корее. Уровень ученика по шкале 한국어학당: ${P.label} — лексика только уровней до ${P.tier}급, предложения не длиннее ${P.maxWords} слов, текст для чтения ${P.readSent} предложений.${P.tier===1?` Уровень начальный: каждое предложение очень короткое и простое, 3–${P.maxWords} слов, одна грамматическая конструкция, без придаточных, только самые частые слова.`:''} Тема: «${t.t}» (${t.n}). Правило: ${t.f}. Примеры для ориентира (не копируй их): ${t.e.slice(0,3).map(e=>e[0]).join('; ')}.${done.length?` Эти предложения ученик уже выполнил верно — не повторяй их и не давай близких вариантов: ${done.join(' | ')}.`:''}
 Сцена: ${sc.ko} — ${sc.d}. Все предложения и тексты бытовые, про реальную жизнь в Корее, с этими реалиями.
 Знакомые слова, используй в основном их: ${knownWords(24)}.${lw.length?` Слова, которые ученик сейчас учит, вставь по одному в разные задания: ${lw.join(', ')}.`:''}
 Составь ровно ${types.length} заданий, типы строго по порядку: ${types.join(', ')}.
@@ -1769,11 +1780,11 @@ function finishItem(ok,note,it,val,fix,mistake,words){
   document.querySelectorAll('#view-train .opt').forEach(b=>{ const txt=it.options[+b.dataset.i]; if(norm(txt)===norm(it.a)) b.classList.add('right'); else if(val!==undefined&&norm(txt)===norm(val)&&!ok) b.classList.add('wrong'); });
   session.results[session.idx]=ok;
   if(session.mode==='calib'){ it.ok=ok; }
-  else if(session.mode==='ach'){ it.ok=ok; const s=state.skills[sk]; s.n++; if(ok) s.c++; pushRecent(sk,ok); state.days[today()]=(state.days[today()]||0)+1; if(!ok) back=demoteWords(words,'ach:'+session.ach.id);
+  else if(session.mode==='ach'){ it.ok=ok; const s=state.skills[sk]; s.n++; if(ok) s.c++; pushRecent(sk,ok); state.days[today()]=(state.days[today()]||0)+1; if(!ok) back=demoteWords(words,'ach:'+session.ach.id); recordSeen(it,ok,'ach:'+session.ach.id);
     if(!ok){ state.errors.push({id:'ach:'+session.ach.id,q:it.q||it.text||'',a:it.a,ts:Date.now()}); state.errors=state.errors.slice(-40); }
     api('attempt',{attempt:{topic:'ach:'+session.ach.id,type:it.type,q:it.q||it.text||'',a:it.a,user:val,correct:ok}}).catch(()=>{}); }
   else {
-    updateTopic(it.topic,ok,it.type); const s=state.skills[sk]; s.n++; if(ok) s.c++; pushRecent(sk,ok); state.level.calN=(state.level.calN||0)+1; if(!ok) back=demoteWords(words,it.topic);
+    updateTopic(it.topic,ok,it.type); const s=state.skills[sk]; s.n++; if(ok) s.c++; pushRecent(sk,ok); state.level.calN=(state.level.calN||0)+1; if(!ok) back=demoteWords(words,it.topic); recordSeen(it,ok,it.topic);
     if(!ok){ state.errors.push({id:it.topic,q:it.q||it.text||'',a:it.a,ts:Date.now()}); state.errors=state.errors.slice(-40); }
     api('attempt',{attempt:{topic:it.topic,type:it.type,q:it.q||it.text||'',a:it.a,user:val,correct:ok}}).catch(()=>{});
   }
