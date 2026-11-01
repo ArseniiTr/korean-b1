@@ -34,7 +34,8 @@ function randomToken(): string {
   return [...a].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 async function getConfig(key: string): Promise<string | null> {
-  const { data } = await supabase.from("app_config").select("value").eq("key", key).maybeSingle();
+  const { data, error } = await supabase.from("app_config").select("value").eq("key", key).maybeSingle();
+  if (error) throw error;
   return data?.value ?? null;
 }
 async function newSession(): Promise<string> {
@@ -46,7 +47,8 @@ async function newSession(): Promise<string> {
 }
 async function validSession(token: unknown): Promise<boolean> {
   if (typeof token !== "string" || token.length < 20) return false;
-  const { data } = await supabase.from("sessions").select("expires_at").eq("token", token).maybeSingle();
+  const { data, error } = await supabase.from("sessions").select("expires_at").eq("token", token).maybeSingle();
+  if (error) throw error; // ошибка базы (например, проект только проснулся) — это не «неверная сессия», клиент не должен разлогиниваться
   return !!data && new Date(data.expires_at) > new Date();
 }
 

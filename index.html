@@ -1147,11 +1147,14 @@ let TOKEN=null; try{ TOKEN=localStorage.getItem(TOKEN_KEY); }catch(e){}
 let saveTimer=null, aiReady=true, serverStatus=null;
 function setSync(mode,text){ const el=document.getElementById('sync'); el.className='sync '+mode; el.querySelector('span').textContent=text; }
 async function api(action,payload){
-  const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,token:TOKEN,...(payload||{})})});
-  let j; try{ j=await r.json(); }catch(e){ j={error:'bad_response'}; }
-  if(!r.ok){ const code=j.error||('http_'+r.status); if(code==='unauthorized'&&TOKEN) logout(); const err=new Error(code); err.code=code; err.text=j.text; err.detail=j.detail; throw err; }
+  let r; try{ r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,token:TOKEN,...(payload||{})})}); }
+  catch(e){ const err=new Error('server_down'); err.code='server_down'; throw err; }
+  let j; try{ j=await r.json(); }catch(e){ j={error:r.status>=500?'server_down':'bad_response'}; }
+  if(!r.ok){ let code=j.error||('http_'+r.status); if(r.status>=500||code==='server_error') code='server_down'; // бесплатный Supabase засыпает: ошибки сервера не считаем ошибкой кода или сессии
+    if(code==='unauthorized'&&TOKEN) logout(); const err=new Error(code); err.code=code; err.text=j.text; err.detail=j.detail; throw err; }
   return j;
 }
+let bootRetries=0;
 // Экономный режим: короткие промпты, max_tokens по типу запроса, модель Haiku без «размышления» на сервере
 const sampleFn=Object.assign(async function(prompt,opts){ opts=opts||{}; const r=await api('ai',{prompt,kind:opts.kind||'text',max_tokens:opts.max_tokens||600}); if(opts.onText) opts.onText({text:r.text,delta:r.text}); return {text:r.text}; },
   { json: async function(prompt,opts){ opts=opts||{}; const r=await api('ai',{prompt,json:true,kind:opts.kind||'json',max_tokens:opts.max_tokens||900}); return r.data; } });
@@ -1163,7 +1166,7 @@ function save(){
 async function persistRemote(){
   if(!TOKEN) return;
   try{ await api('save',{data:state}); setSync('ok','Сохранено'); }
-  catch(e){ setSync('err','Не сохранено: '+e.code); }
+  catch(e){ setSync('err',e.code==='server_down'?'Сервер спит, сохраню позже':'Не сохранено: '+e.code); if(e.code==='server_down'){ clearTimeout(saveTimer); saveTimer=setTimeout(persistRemote,30000); } }
 }
 async function loadRemote(){
   if(!TOKEN) return;
@@ -1184,11 +1187,12 @@ function renderGate(){
   <form id="gate-form"><input id="pin" type="password" autocomplete="${configured?'current-password':'new-password'}" placeholder="Код доступа" aria-label="Код доступа"><button class="btn primary" type="submit">${configured?'Войти':'Создать'}</button></form>
   <p id="gate-err" class="small" style="margin:8px 0 0;color:var(--bad)"></p>
   ${st&&!st.ai?'<p class="notice" style="margin:12px 0 0">Ключ Anthropic API ещё не добавлен: прогресс сохраняется, но задания пока не сгенерируются. Ключ вводится на главной после входа.</p>':''}
-  ${st?'':'<p class="notice" style="margin:12px 0 0">Сервер не отвечает. Проверьте интернет и обновите страницу.</p>'}</div><div class="mosaic"></div></div>`;
+  ${st?'':'<p class="notice" id="wake" style="margin:12px 0 0">Сервер не отвечает. Скорее всего, бесплатный Supabase уснул после недели без занятий и сейчас просыпается — это занимает одну-две минуты. Страница проверит снова сама. <button class="btn small" id="wake-retry" type="button">Проверить сейчас</button></p>'}</div><div class="mosaic"></div></div>`;
+  if(!st){ const retry=()=>{ const w=document.getElementById('wake'); if(w) w.firstChild.textContent='Проверяю… '; boot(); }; document.getElementById('wake-retry').onclick=retry; if(bootRetries<12){ bootRetries++; setTimeout(()=>{ if(!serverStatus&&!document.getElementById('gate').classList.contains('hidden')) retry(); },15000); } } else bootRetries=0;
   const form=document.getElementById('gate-form'), err=document.getElementById('gate-err');
   form.onsubmit=async e=>{ e.preventDefault(); const pin=document.getElementById('pin').value; err.textContent=''; form.querySelector('button').disabled=true;
     try{ const r=await api(configured?'login':'setup',{pin}); TOKEN=r.token; try{localStorage.setItem(TOKEN_KEY,TOKEN);}catch(x){} gate(false); show(current); loadRemote(); }
-    catch(x){ err.textContent={wrong_pin:'Неверный код.',pin_too_short:'Код слишком короткий.',already_configured:'Код уже задан, введите его.',not_configured:'Код ещё не создан.'}[x.code]||('Ошибка: '+x.code); if(x.code==='already_configured'||x.code==='not_configured'){ await boot(); } }
+    catch(x){ err.textContent={wrong_pin:'Неверный код.',pin_too_short:'Код слишком короткий.',already_configured:'Код уже задан, введите его.',not_configured:'Код ещё не создан.',server_down:'Сервер ещё просыпается. Подождите минуту и нажмите «Войти» снова.'}[x.code]||('Ошибка: '+x.code); if(x.code==='already_configured'||x.code==='not_configured'){ await boot(); } }
     finally{ const b=form.querySelector('button'); if(b) b.disabled=false; } };
   document.getElementById('pin').focus();
 }
