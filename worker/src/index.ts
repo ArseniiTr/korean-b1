@@ -12,7 +12,12 @@ export interface Env {
   AI_RELAY?: DurableObjectNamespace;
 }
 
-const MODEL = "claude-haiku-5-5"; // самая экономичная модель, по просьбе пользователя
+const MODEL = "claude-haiku-5-5"; // самая экономичная модель: проверки, разборы, пословные переводы
+// Задания составляет Sonnet: у Haiku чаще ошибочные ключи ответа (например 예요 после 받침). Это ~1200 токенов на запрос, доля в расходах небольшая.
+const MODEL_GEN = "claude-sonnet-5-5";
+function modelFor(kind: string): string { return kind === "exercises" ? MODEL_GEN : MODEL; }
+// Размышление не нужно для коротких JSON-ответов. У Haiku его можно выключить; Sonnet 5.5 на "disabled" отвечает 400, у него режим "between_tools" (думает только между вызовами инструментов, которых здесь нет)
+function thinkingFor(model: string): { type: "disabled" } | { type: "between_tools" } { return model === MODEL ? { type: "disabled" } : { type: "between_tools" }; }
 const SESSION_DAYS = 180;
 const PIN_SALT = "korean-b1::";
 
@@ -130,12 +135,13 @@ async function callAnthropic(env: Env, apiKey: string, body: Record<string, unkn
   if (!prompt) return json({ error: "empty_prompt" }, 400);
   const maxTokens = Math.min(Math.max(Number(body.max_tokens) || 900, 100), 3000);
   try {
+    const model = modelFor(String(body.kind ?? ""));
     const res = await client.messages.create({
-      model: MODEL,
+      model,
       max_tokens: maxTokens,
       system: SYSTEM,
-      // Экономия: у Haiku 5.5 адаптивное размышление включено по умолчанию и тарифицируется как вывод; для коротких JSON-ответов оно не нужно
-      thinking: { type: "disabled" },
+      // Экономия: адаптивное размышление включено по умолчанию и тарифицируется как вывод; для коротких JSON-ответов оно не нужно
+      thinking: thinkingFor(model),
       output_config: { effort: "low" },
       messages: [{ role: "user", content: prompt }],
     });
@@ -189,6 +195,9 @@ async function stats(db: D1Database): Promise<Response> {
   const ai = await db
     .prepare("SELECT COUNT(*) AS calls, COALESCE(SUM(input_tokens), 0) AS input_tokens, COALESCE(SUM(output_tokens), 0) AS output_tokens FROM ai_calls")
     .first<{ calls: number; input_tokens: number; output_tokens: number }>();
+  const byModel = (await db
+    .prepare("SELECT model, COUNT(*) AS calls, COALESCE(SUM(input_tokens), 0) AS input_tokens, COALESCE(SUM(output_tokens), 0) AS output_tokens FROM ai_calls GROUP BY model")
+    .all<{ model: string; calls: number; input_tokens: number; output_tokens: number }>()).results;
   const byTopic: Record<string, { n: number; c: number }> = {};
   for (const a of attempts) {
     const t = (byTopic[a.topic_id ?? "?"] ??= { n: 0, c: 0 });
@@ -198,7 +207,7 @@ async function stats(db: D1Database): Promise<Response> {
   return json({
     attempts: attempts.length,
     byTopic,
-    ai: { calls: ai?.calls ?? 0, input_tokens: ai?.input_tokens ?? 0, output_tokens: ai?.output_tokens ?? 0, model: MODEL },
+    ai: { calls: ai?.calls ?? 0, input_tokens: ai?.input_tokens ?? 0, output_tokens: ai?.output_tokens ?? 0, model: MODEL, model_gen: MODEL_GEN, by_model: byModel },
   });
 }
 

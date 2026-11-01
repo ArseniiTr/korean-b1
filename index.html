@@ -1225,7 +1225,10 @@ async function boot(){
 }
 async function loadStats(){
   const el=document.getElementById('ai-stats'); if(!el||!TOKEN) return;
-  try{ const s=await api('stats'); const cost=(s.ai.input_tokens*0.10+s.ai.output_tokens*0.50)/1e6; el.textContent=`В журнале ${s.attempts} ответов. Запросов к ИИ: ${s.ai.calls}, токенов: ${s.ai.input_tokens+s.ai.output_tokens}, примерно $${cost.toFixed(3)} (модель ${s.ai.model}).`; }catch(e){}
+  try{ const s=await api('stats'); const PRICE={haiku:[0.10,0.50],sonnet:[2,10],opus:[4,20]}; // $ за 1M токенов (вход, выход), тарифы Anthropic
+    const rows=Array.isArray(s.ai.by_model)&&s.ai.by_model.length?s.ai.by_model:[{model:s.ai.model,input_tokens:s.ai.input_tokens,output_tokens:s.ai.output_tokens}];
+    const cost=rows.reduce((a,r)=>{ const pr=PRICE[Object.keys(PRICE).find(k=>String(r.model||'').includes(k))]||PRICE.haiku; return a+(r.input_tokens*pr[0]+r.output_tokens*pr[1])/1e6; },0);
+    el.textContent=`В журнале ${s.attempts} ответов. Запросов к ИИ: ${s.ai.calls}, токенов: ${s.ai.input_tokens+s.ai.output_tokens}, примерно $${cost.toFixed(3)} (задания — ${s.ai.model_gen||s.ai.model}, проверки — ${s.ai.model}).`; }catch(e){}
 }
 let toastTimer=null;
 function toast(msg){ let el=document.getElementById('toast'); if(!el){ el=document.createElement('div'); el.id='toast'; el.className='toast'; document.body.appendChild(el); } el.textContent=msg; el.classList.remove('hidden'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.add('hidden'),2600); }
