@@ -93,7 +93,8 @@ async function logCall(db: D1Database, kind: string, res: Anthropic.Message): Pr
 async function callAi(env: Env, body: Record<string, unknown>): Promise<Response> {
   const apiKey = await getApiKey(env);
   if (!apiKey) return json({ error: "no_api_key" }, 503);
-  const client = new Anthropic({ apiKey });
+  // Перегрузка или обрыв на стороне Anthropic: SDK сам повторяет 429/5xx, даём ему до 4 попыток и 60 с на запрос
+  const client = new Anthropic({ apiKey, maxRetries: 4, timeout: 60_000 });
   const prompt = String(body.prompt ?? "").slice(0, 12000);
   if (!prompt) return json({ error: "empty_prompt" }, 400);
   const maxTokens = Math.min(Math.max(Number(body.max_tokens) || 900, 100), 3000);
@@ -119,7 +120,10 @@ async function callAi(env: Env, body: Record<string, unknown>): Promise<Response
   } catch (e) {
     if (e instanceof Anthropic.AuthenticationError) return json({ error: "bad_api_key" }, 503);
     if (e instanceof Anthropic.RateLimitError) return json({ error: "rate_limited" }, 429);
-    if (e instanceof Anthropic.APIError) return json({ error: "api_error", detail: e.message, status: e.status }, 502);
+    if (e instanceof Anthropic.APIError) {
+      console.error("anthropic_error", String(body.kind ?? ""), e.status, e.message);
+      return json({ error: "api_error", detail: e.message, status: e.status }, 502);
+    }
     throw e;
   }
 }

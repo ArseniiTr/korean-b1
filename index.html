@@ -1160,7 +1160,7 @@ async function api(action,payload){
   let r; try{ r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,token:TOKEN,...(payload||{})})}); }
   catch(e){ const err=new Error('server_down'); err.code='server_down'; throw err; }
   let j; try{ j=await r.json(); }catch(e){ j={error:r.status>=500?'server_down':'bad_response'}; }
-  if(!r.ok){ let code=j.error||('http_'+r.status); if(r.status>=500||code==='server_error') code='server_down'; // ошибки сервера не считаем ошибкой кода или сессии
+  if(!r.ok){ let code=j.error||('http_'+r.status); if(code==='server_error'||(r.status>=500&&!['api_error','rate_limited','no_api_key','bad_api_key'].includes(code))) code='server_down'; // недоступность сервера не считаем ошибкой кода или сессии; ошибка самого Anthropic API остаётся api_error
     if(code==='unauthorized'&&TOKEN) logout(); const err=new Error(code); err.code=code; err.text=j.text; err.detail=j.detail; throw err; }
   return j;
 }
@@ -1568,7 +1568,7 @@ async function aiText(prompt,boxId,btnIds,maxTokens,kind){
 }
 // Дословный перевод: порядок слов корейский, у каждого слова — значение и роль частицы
 function gloss(text,boxId,btnId){ return aiText(`Дай дословный перевод по словам, строго в корейском порядке слов, чтобы русскоязычный ученик понял структуру. Формат: каждая строка «корейское слово = перевод корня + частица/окончание в скобках». Пример: «저는 = я + 는 (тема)», «학교에 = школа + 에 (куда/где)», «가요 = идти + 아/어요 (вежл. наст.)». После каждого предложения строка «→ литературный перевод». Текст:\n${text}`,boxId,[btnId],Math.min(700,120+text.length*3),'gloss'); }
-function aiError(e){ const c=e&&e.code; const m={no_api_key:'Ключ Anthropic API не добавлен. Введите его на главной.',bad_api_key:'Ключ Anthropic API отклонён: введите другой на главной.',rate_limited:'Слишком много запросов, подождите минуту.',invalid_json:'ИИ ответил не по формату, попробуйте ещё раз.',refusal:'Модель отказалась отвечать на этот запрос.',api_error:'Ошибка Anthropic API'+(e.detail?': '+e.detail:'')+'.',unauthorized:'Сессия истекла, войдите снова.',bad_response:'Сервер вернул неожиданный ответ.'}; return m[c]||('Ошибка ИИ: '+(c||'неизвестная')+'.'); }
+function aiError(e){ const c=e&&e.code; const m={no_api_key:'Ключ Anthropic API не добавлен. Введите его на главной.',bad_api_key:'Ключ Anthropic API отклонён: введите другой на главной.',rate_limited:'Слишком много запросов, подождите минуту.',invalid_json:'ИИ ответил не по формату, попробуйте ещё раз.',refusal:'Модель отказалась отвечать на этот запрос.',api_error:'Anthropic API временно недоступен'+(e.detail?' ('+String(e.detail).slice(0,120)+')':'')+'. Обычно помогает повторить через минуту.',server_down:'Сервер учебника не ответил. Проверьте интернет и повторите.',unauthorized:'Сессия истекла, войдите снова.',bad_response:'Сервер вернул неожиданный ответ.'}; return m[c]||('Ошибка ИИ: '+(c||'неизвестная')+'.'); }
 
 /* ============ ТРЕНИРОВКА ============ */
 let session=null; // {mode:'train'|'calib', topics, scene, items, idx, results, loading, error}
@@ -1682,7 +1682,7 @@ async function checkAnswer(val){
     try{
       const r=await sampleFn.json(`Проверь ответ ученика по корейскому. ${ctx} Задание: ${it.text?it.text+' / ':''}${it.q}. Образец: ${it.a}. Ответ ученика: ${val}. Верно, если грамматика темы и смысл правильные, даже при других словах или разговорном опускании частиц; для свободного письма верно, если нет грубых ошибок и грамматика темы использована. Ответь только JSON {"ok":true|false,"mistake":"если неверно: в чём ИМЕННО ошибка ученика, 1–2 коротких очень понятных предложения по-русски с указанием неверного слова или окончания; если верно — пустая строка","fb":"1 предложение: что хорошо или что улучшить","fix":"исправленный вариант ответа ученика по-корейски или пустая строка","words":["словарные формы (глаголы и прилагательные на -다) слов, которые ученик не знал, перепутал или написал с ошибкой, до 3; пустой массив, если ошибка только в частице или окончании"]}.`,{kind:'check',max_tokens:340});
       ok=!!(r&&r.ok); finishItem(ok,r&&r.fb?String(r.fb):'',it,val,r&&r.fix?String(r.fix):'',r&&r.mistake?String(r.mistake):'',r&&r.words); return;
-    }catch(e){ finishItem(false,'Не удалось проверить через ИИ ('+aiError(e)+'). Сравните с образцом.',it,val); return; }
+    }catch(e){ checkFailed(it,val,e); return; }
   }
   if(!ok&&aiReady&&!it.cal&&['mc','fill','order','read'].includes(it.type)){
     // объяснение ошибки: коротко и понятно, именно про выбранный ответ
@@ -1693,6 +1693,17 @@ async function checkAnswer(val){
     finishItem(false,'',it,val,'',mistake,words); return;
   }
   finishItem(ok,'',it,val);
+}
+// проверка не удалась: прогресс не трогаем, предлагаем повторить или сравнить с образцом самому
+function checkFailed(it,val,e){
+  const fb=document.getElementById('fb'); const koAnswer=!/[а-яА-Я]/.test(String(it.a));
+  fb.innerHTML=`<div class="check neutral"><div class="head"><span>Проверка не удалась</span><span>${esc(SKILLS[SKILL_OF[it.type]].ko)}</span></div><div class="body">
+    <p class="why">${esc(aiError(e))} Ответ пока не засчитан.</p>
+    <p class="quote">Образец: <span class="${koAnswer?'ko':''}">${esc(it.a)}</span></p><p class="quote">Ваш ответ: <span class="ko">${esc(val)}</span></p>
+    <div class="row" style="gap:8px"><button class="btn primary small" id="recheck">Проверить ещё раз</button><span class="muted small">или оцените сами:</span><button class="btn small" id="self-ok">Совпадает по смыслу</button><button class="btn small" id="self-bad">Неверно</button></div></div></div>`;
+  document.getElementById('recheck').onclick=()=>{ document.querySelectorAll('#view-train #check, #view-train #check-order, #view-train #inp').forEach(x=>x.disabled=false); checkAnswer(val); };
+  document.getElementById('self-ok').onclick=()=>finishItem(true,'Засчитано по вашей оценке: сравните ещё раз с образцом.',it,val);
+  document.getElementById('self-bad').onclick=()=>finishItem(false,'Отмечено как ошибка по вашей оценке.',it,val);
 }
 function lockInputs(){ document.querySelectorAll('#view-train .opt, #view-train .tok, #view-train #check, #view-train #check-order, #view-train #reset-order, #view-train #inp, #skip').forEach(x=>x.disabled=true); }
 function finishItem(ok,note,it,val,fix,mistake,words){
